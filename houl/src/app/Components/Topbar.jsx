@@ -104,7 +104,7 @@ const TopBar = ({ userId }) => {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      router.push("/"); // Redirect to the login page or home page after sign-out
+      router.push("/auth"); // Redirect to the login page or home page after sign-out
     } catch (error) {
       console.error("Error signing out:", error);
     }

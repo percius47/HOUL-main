@@ -75,7 +75,7 @@ const StreamPage = ({ params }) => {
    }, [username]);
 
    if (!user) {
-     return <p>Loading...</p>; // Handle the case where user data is not yet available
+     return <p>Loading...user not found</p>; // Handle the case where user data is not yet available
    }
 
   return (
