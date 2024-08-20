@@ -23,7 +23,7 @@ const Login = ({ onLogin }) => {
     const token = await user.getIdToken();
     localStorage.setItem("firebaseToken", token); // Save the token to localStorage
     // onLogin(user);
-    router.push("/home");
+    router.push("/");
   };
 
   const handleGoogleLogin = async () => {

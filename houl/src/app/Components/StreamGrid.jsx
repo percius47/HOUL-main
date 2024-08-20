@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { db } from "../firebase/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import ReactPlayer from "react-player";
+import { useRouter } from "next/navigation";
 
 const StreamGrid = () => {
   const [streams, setStreams] = useState([]);
   const [timeElapsed, setTimeElapsed] = useState({});
-
+ const router = useRouter();
   useEffect(() => {
     // Query the "streams" collection to get all active streams
     const streamsQuery = collection(db, "streams");
@@ -55,11 +56,21 @@ const StreamGrid = () => {
     return () => clearInterval(intervalId);
   }, [streams]);
 
+
+  const handleStreamClick = (username) => {
+    router.push(`/stream/${username}`);
+  };
+
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {streams.length > 0 ? (
         streams.map((stream) => (
-          <div key={stream.id} className="bg-gray-800 p-4 rounded-lg">
+          <div
+            key={stream.id}
+            className="bg-gray-800 p-4 rounded-lg cursor-pointer"
+            onClick={() => handleStreamClick(stream.author)}
+          >
             <ReactPlayer
               playsinline
               controls
