@@ -1,18 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ClipboardCopy, Check, Play } from "lucide-react";
-import { doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { ClipboardCopy, Check } from "lucide-react";
+import {
+  doc,
+  updateDoc,
+  onSnapshot,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import ReactPlayer from "react-player";
 
-const GoLiveModal = ({ onClose, streamInfo, userId }) => {
+const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const [serverUrlCopied, setServerUrlCopied] = useState(false);
   const [streamKeyCopied, setStreamKeyCopied] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [streamUrl, setStreamUrl] = useState("");
-  const videoRef = useRef(null);
+  const [streamName, setStreamName] = useState("");
 
   const serverUrl = "rtmp://13.234.177.100:1935/houl1/live1";
   const streamKey = "live1";
@@ -31,32 +38,44 @@ const GoLiveModal = ({ onClose, streamInfo, userId }) => {
   const handleCopyServerUrl = () => {
     navigator.clipboard.writeText(serverUrl).then(() => {
       setServerUrlCopied(true);
-      setTimeout(() => setServerUrlCopied(false), 2000); // Reset after 2 seconds
+      setTimeout(() => setServerUrlCopied(false), 2000);
     });
   };
 
   const handleCopyStreamKey = () => {
     navigator.clipboard.writeText(streamKey).then(() => {
       setStreamKeyCopied(true);
-      setTimeout(() => setStreamKeyCopied(false), 2000); // Reset after 2 seconds
+      setTimeout(() => setStreamKeyCopied(false), 2000);
     });
   };
 
   const handleStartStream = async () => {
-    const userDoc = doc(db, "users", userId);
-    await updateDoc(userDoc, {
-      isStreaming: true,
-    });
-    setIsPreviewing(false);
-    onClose(); // Close the modal
-  };
+    if (!streamName.trim()) {
+      alert("Please enter a name for your stream.");
+      return;
+    }
 
-  const handleStopStream = async () => {
-    const userDoc = doc(db, "users", userId);
-    await updateDoc(userDoc, {
-      isStreaming: false,
-    });
-    onClose(); // Close the modal
+    try {
+      // Create a new document in the "streams" collection
+      await addDoc(collection(db, "streams"), {
+        streamName: streamName,
+        author: username,
+        streamUrl: streamUrl,
+        streamStartedAt: Date.now(),
+        likes: 0,
+        chat: [],
+      });
+
+      // Update the isStreaming field in the user's document
+      const userDocRef = doc(db, "users", userId);
+      await updateDoc(userDocRef, { isStreaming: true });
+
+      setIsStreaming(true);
+      setIsPreviewing(false);
+      onClose(); // Close the modal
+    } catch (error) {
+      console.error("Error starting stream:", error);
+    }
   };
 
   return (
@@ -121,28 +140,40 @@ const GoLiveModal = ({ onClose, streamInfo, userId }) => {
                 playsinline
                 controls
                 url={streamUrl}
-                playing={true} // Auto-play the video
+                playing={true}
                 className="react-player"
                 config={{
                   file: {
                     attributes: {
-                      autoPlay: true, // Ensure autoPlay is set
+                      autoPlay: true,
                     },
                     hlsOptions: {
-                      startPosition: -1, // Automatically start at the live edge
+                      startPosition: -1,
                     },
                   },
                 }}
               />
             ) : (
               <p>Loading stream...</p>
-            )}{" "}
+            )}
+            <div className="mb-4">
+              <label className="block font-medium text-white">
+                Stream Name
+              </label>
+              <input
+                type="text"
+                value={streamName}
+                onChange={(e) => setStreamName(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white"
+                placeholder="Enter a name for your stream"
+              />
+            </div>
             <div className="flex w-full justify-around">
               <Button className="bg-green-600 mb-4" onClick={handleStartStream}>
                 Start Stream
               </Button>
-              <Button className="bg-red-600" onClick={handleStopStream}>
-                Stop Stream
+              <Button className="bg-red-600" onClick={onClose}>
+                Cancel
               </Button>
             </div>
           </>
