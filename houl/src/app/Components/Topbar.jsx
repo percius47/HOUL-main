@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import GoLiveModal from "./GoLiveModal";
 import { doc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../firebase/firebase";
-// import {  doc, onSnapshot, updateDoc } from "/firebase/firestore";
+import { auth, db } from "../firebase/firebase";
+import { signOut } from "firebase/auth";
 
 const TopBar = ({ username, userId }) => {
   const [showModal, setShowModal] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!userId) return;
@@ -36,6 +38,15 @@ const TopBar = ({ username, userId }) => {
     await updateDoc(userDoc, { isStreaming: false });
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push("/"); // Redirect to the login page or home page after sign-out
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
       <h1 className="text-xl font-bold text-purple-700">HOUL</h1>
@@ -57,6 +68,9 @@ const TopBar = ({ username, userId }) => {
             streamInfo={null} // You may need to pass this if it's available
           />
         )}
+        <Button className="bg-orange-600" onClick={handleSignOut}>
+          Sign Out 
+        </Button>
       </div>
     </header>
   );

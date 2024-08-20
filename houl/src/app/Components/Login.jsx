@@ -61,7 +61,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="my-3 text-7xl font-bold text-purple-700">H O W L</h1>
+      <h1 className="my-3 text-7xl font-bold text-purple-700">H O U L</h1>
       <h2 className="mb-4 text-2xl font-bold">
         {isSignUp ? "Sign Up" : "Login"}
       </h2>
