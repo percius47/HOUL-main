@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import GoLiveModal from "./GoLiveModal";
+import { IoClose } from "react-icons/io5";
+import { Menu, SidebarCloseIcon } from "lucide-react"; // Import an icon for the drawer toggle
+import { Dialog, DialogPanel } from "@headlessui/react"; // Using Headless UI for the drawer
 import {
   doc,
   onSnapshot,
@@ -24,6 +27,8 @@ const TopBar = ({ userId }) => {
   const [showModal, setShowModal] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [username, setUsername] = useState("");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State for controlling drawer visibility
+
   const router = useRouter();
 
   useEffect(() => {
@@ -111,32 +116,100 @@ const TopBar = ({ userId }) => {
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
-      <h1 className="text-xl font-bold text-purple-700">HOUL</h1>
-      <div className="flex items-center space-x-4">
-        <p>Welcome, {username}</p>
-        {isStreaming ? (
-          <Button className="bg-red-600" onClick={handleStopStream}>
-            Stop Stream
+    <>
+      {/* TopBar */}
+      <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
+        <h1 className="text-xl font-bold text-purple-700">HOUL</h1>
+
+        {/* Hamburger menu for small screens */}
+        <div className="sm:hidden">
+          <Button
+            onClick={() => setIsDrawerOpen(true)}
+            className="bg-gray-700 p-2 rounded"
+          >
+            <Menu className="text-white" />
           </Button>
-        ) : (
-          <Button className="bg-green-600" onClick={handleGoLive}>
-            Go Live
+        </div>
+
+        {/* Normal buttons for larger screens */}
+        <div className="hidden sm:flex items-center space-x-4">
+          <p>Welcome, {username}</p>
+          {isStreaming ? (
+            <Button className="bg-red-600" onClick={handleStopStream}>
+              Stop Stream
+            </Button>
+          ) : (
+            <Button className="bg-green-600" onClick={handleGoLive}>
+              Go Live
+            </Button>
+          )}
+          <Button className="bg-orange-600" onClick={handleSignOut}>
+            Sign Out
           </Button>
-        )}
-        {showModal && (
-          <GoLiveModal
-            onClose={() => setShowModal(false)}
-            userId={userId}
-            username={username}
-            setIsStreaming={setIsStreaming} // Pass function to set isStreaming
-          />
-        )}
-        <Button className="bg-orange-600" onClick={handleSignOut}>
-          Sign Out
-        </Button>
-      </div>
-    </header>
+        </div>
+      </header>
+
+      {/* Go Live Modal */}
+      {showModal && (
+        <GoLiveModal
+          onClose={() => setShowModal(false)}
+          userId={userId}
+          username={username}
+          setIsStreaming={setIsStreaming}
+        />
+      )}
+
+      {/* Drawer for small screens */}
+      <Dialog
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        className="relative z-50"
+      >
+        {/* Drawer backdrop */}
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+        {/* Drawer panel */}
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full max-w-xs p-4 overflow-y-auto bg-gray-800 text-white">
+          <div className="flex justify-between items-center mb-4">
+            {/* <h2 className="text-lg font-bold">Menu</h2> */}
+            <Button
+              onClick={() => setIsDrawerOpen(false)}
+              className="bg-gray-700 text-white text-xl p-2 rounded fixed right-0 mt-8 mr-4"
+            >
+              
+              <IoClose />
+            </Button>
+          </div>
+          <p className="text-center text-lg mt-14">Welcome, {username}</p>
+          <div className="mt-4 space-y-2">
+            {isStreaming ? (
+              <Button
+                className="bg-red-600 w-full"
+                onClick={() => {
+                  handleStopStream();
+                  setIsDrawerOpen(false);
+                }}
+              >
+                Stop Stream
+              </Button>
+            ) : (
+              <Button
+                className="bg-green-600 w-full"
+                onClick={() => {
+                  handleGoLive();
+                  setIsDrawerOpen(false);
+                }}
+              >
+                Go Live
+              </Button>
+            )}
+            <Button className="bg-orange-600 w-full" onClick={handleSignOut}>
+              Sign Out
+            </Button>
+          </div>
+        </DialogPanel>
+      </Dialog>
+    </>
   );
 };
 

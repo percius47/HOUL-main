@@ -94,9 +94,7 @@ const StreamPage = ({ params }) => {
 
       setTimeElapsed(
         `${hours > 0 ? hours + "h " : ""}${minutes > 0 ? minutes + "m " : ""}
-        ${
-          seconds > 0 ? seconds + "s ago" : "now"
-        }`
+        ${seconds > 0 ? seconds + "s ago" : "now"}`
       );
     };
 
@@ -237,16 +235,17 @@ const StreamPage = ({ params }) => {
     <>
       <TopBar username={user.email} userId={user.uid} />
       <div className="flex flex-col lg:flex-row p-4 h-screen justify-between bg-gray-900">
-        <div className="w-full lg:w-[70%] ">
+        <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4">
           {streamUrl ? (
-            <div>
+            <div className="relative">
               <ReactPlayer
                 url={streamUrl}
                 playing={true}
                 controls
                 className="react-player"
                 width="100%"
-                height="100%"
+                height="auto"
+                style={{ maxHeight: "75vh" }}
                 config={{
                   file: {
                     attributes: {
@@ -258,57 +257,54 @@ const StreamPage = ({ params }) => {
                   },
                 }}
               />
-              <h2 className="text-4xl font-bold text-white ml-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mt-2">
                 {streamName}
               </h2>
-              <div className="flex justify-between w-[80%]">
-                <div className="ml-4 my-2 flex">
-                  {" "}
+              <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
+                <div className="flex items-center">
                   <CustomAvatar
                     className="inline"
                     src={creatorAvatar}
                     alt={"username"}
                     fallbackSrc={"https://github.com/shadcn.png"}
                   />
-                  <h2 className="text-2xl font-bold text-gray-400 inline ml-3">
-                    {username}
-                  </h2>
+                  <div className="ml-3">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-400">
+                      {username}
+                    </h2>
+                    <span className="text-sm sm:text-md text-gray-500">
+                      {subscribers} Subscribers
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between w-[50%] mx-4 ">
+                <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                   <Button
                     onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
-                    className={`mt-2 ${
-                      isSubscribed ? "bg-red-500" : "bg-blue-500"
-                    }`}
+                    className={`${isSubscribed ? "bg-red-500" : "bg-blue-500"}`}
                   >
                     {isSubscribed ? "Unsubscribe" : "Subscribe"}
                   </Button>
-                  <div className="flex items-center justify-evenly w-[30%]">
-                    <Button
-                      onClick={handleLike}
-                      className={`bg-gray-200 px-3 ${
-                        hasLiked ? "text-green-500" : ""
-                      }`}
-                    >
-                      {likes}
-                      {hasLiked ? <AiFillLike /> : <AiOutlineLike />}
-                    </Button>
-                    <Button
-                      onClick={handleDislike}
-                      className={`bg-gray-200 px-3 ${
-                        hasDisliked ? "text-red-500" : ""
-                      }`}
-                    >
-                      {dislikes}
-                      {hasDisliked ? <AiFillDislike /> : <AiOutlineDislike />}
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleLike}
+                    className={`bg-gray-200 px-2 ${
+                      hasLiked ? "text-green-500" : ""
+                    }`}
+                  >
+                    {likes}
+                    {hasLiked ? <AiFillLike /> : <AiOutlineLike />}
+                  </Button>
+                  <Button
+                    onClick={handleDislike}
+                    className={`bg-gray-200 px-2 ${
+                      hasDisliked ? "text-red-500" : ""
+                    }`}
+                  >
+                    {dislikes}
+                    {hasDisliked ? <AiFillDislike /> : <AiOutlineDislike />}
+                  </Button>
                 </div>
               </div>
-              <span className="text-lg text-gray-500 ml-4 my-2">
-                {subscribers} Subscribers
-              </span>
-              <span className="text-lg text-gray-500 ml-4 my-2 block">
+              <span className="text-sm sm:text-lg text-gray-500 mt-2">
                 Started {timeElapsed}
               </span>
             </div>
