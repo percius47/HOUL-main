@@ -9,74 +9,229 @@ import {
   onSnapshot,
   doc,
   getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  getDocs,
 } from "firebase/firestore";
 import ReactPlayer from "react-player";
 import { Button } from "@/components/ui/button";
-import { AiFillLike, AiOutlineDislike, AiOutlineLike } from "react-icons/ai";
+import {
+  AiOutlineLike,
+  AiOutlineDislike,
+  AiFillLike,
+  AiFillDislike,
+} from "react-icons/ai";
 import TopBar from "@/app/Components/Topbar";
 import { onAuthStateChanged } from "firebase/auth";
+import CustomAvatar from "@/app/Components/CustomAvatar";
+
 const StreamPage = ({ params }) => {
-   const { username } = params;
-   const [streamUrl, setStreamUrl] = useState(null);
-   const [streamName, setStreamName] = useState("");
-   const [chatMessages, setChatMessages] = useState([]);
-   const [subscribers, setSubscribers] = useState(0);
-   const [likes, setLikes] = useState(0);
-   const [user, setUser] = useState(null);
+  const { username } = params;
+  const [streamUrl, setStreamUrl] = useState(null);
+  const [streamName, setStreamName] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [subscribers, setSubscribers] = useState(0);
+  const [likes, setLikes] = useState(0);
+  const [dislikes, setDislikes] = useState(0);
+  const [user, setUser] = useState(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [hasDisliked, setHasDisliked] = useState(false);
+  const [authorId, setAuthorId] = useState(null);
+  const [creatorAvatar, setCreatorAvatar] = useState(null);
+  const [streamTime, setStreamTime] = useState(null);
+  const [timeElapsed, setTimeElapsed] = useState("");
 
-   useEffect(() => {
-     // Monitor user authentication status
-     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-       if (currentUser) {
-         setUser(currentUser);
-       } else {
-         setUser(null);
-       }
-     });
+  useEffect(() => {
+    // Monitor user authentication status
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        setUser(null);
+      }
+    });
 
-     return () => unsubscribeAuth();
-   }, []);
+    return () => unsubscribeAuth();
+  }, []);
 
-   useEffect(() => {
-     if (!username) return;
+  useEffect(() => {
+    if (!username) return;
 
-     // Fetch stream data
-     const streamsQuery = query(
-       collection(db, "streams"),
-       where("author", "==", username)
-     );
+    // Fetch stream data
+    const streamsQuery = query(
+      collection(db, "streams"),
+      where("author", "==", username)
+    );
 
-     const unsubscribe = onSnapshot(streamsQuery, (snapshot) => {
-       if (!snapshot.empty) {
-         const streamData = snapshot.docs[0].data();
-         setStreamUrl(streamData.streamUrl);
-         setStreamName(streamData.streamName);
-         setLikes(streamData.likes);
-       }
-     });
+    const unsubscribe = onSnapshot(streamsQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        const streamData = snapshot.docs[0].data();
+        setStreamUrl(streamData.streamUrl);
+        setStreamName(streamData.streamName);
+        setStreamTime(streamData.streamStartedAt); // Convert Firestore Timestamp to JS Date
+        setLikes(streamData.likes); // Ensure likes are updated in real-time
+        setDislikes(streamData.dislikes || 0); // Ensure dislikes are updated in real-time
+        setHasLiked(streamData.likedBy?.includes(user?.uid)); // Update hasLiked state
+        setHasDisliked(streamData.dislikedBy?.includes(user?.uid)); // Update hasDisliked state
+      }
+    });
 
-     return () => unsubscribe();
-   }, [username]);
+    return () => {
+      unsubscribe();
+    };
+  }, [username, user]); // Add 'user' as dependency to re-trigger the listener when user changes
 
-   useEffect(() => {
-     if (!username) return;
+  useEffect(() => {
+    if (!streamTime) return;
 
-     // Fetch subscriber count from users collection
-     const fetchSubscribers = async () => {
-       const userDocRef = doc(db, "users", username);
-       const userDoc = await getDoc(userDocRef);
-       if (userDoc.exists()) {
-         const userData = userDoc.data();
-         setSubscribers(userData.subscribers || 0);
-       }
-     };
+    const calculateTimeElapsed = () => {
+      const diff = Date.now() - streamTime; // Difference in milliseconds
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-     fetchSubscribers();
-   }, [username]);
+      setTimeElapsed(
+        `${hours > 0 ? hours + "h " : ""}${minutes > 0 ? minutes + "m " : ""}
+        ${
+          seconds > 0 ? seconds + "s ago" : "now"
+        }`
+      );
+    };
 
-   if (!user) {
-     return <p>Loading...user not found</p>; // Handle the case where user data is not yet available
-   }
+    calculateTimeElapsed(); // Initial call to set the time right away
+    const intervalId = setInterval(calculateTimeElapsed, 300000); // Update every second
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, [streamTime]);
+
+  const fetchAuthorUid = async () => {
+    try {
+      // Query the "users" collection to find the user with the given username
+      const usersQuery = query(
+        collection(db, "users"),
+        where("username", "==", username)
+      );
+
+      const querySnapshot = await getDocs(usersQuery);
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        console.log("author uid", userDoc.id);
+
+        return userDoc.id;
+      } else {
+        console.log("No user found with the provided username.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching author UID:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (!username || !user) return;
+
+    const fetchUserData = async () => {
+      const authorUid = await fetchAuthorUid(username);
+      setAuthorId(authorUid);
+      console.log("author uid", authorUid);
+
+      const userDocRef = doc(db, "users", authorUid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log(
+          "creator subs data",
+          userData.username,
+          userData.subscribers,
+          authorUid
+        );
+        setCreatorAvatar(userData.photoUrl);
+        setSubscribers(userData.subscribers?.length || 0);
+        setIsSubscribed(
+          Array.isArray(userData.subscribers)
+            ? userData.subscribers.includes(user.uid)
+            : false
+        );
+      }
+    };
+
+    fetchUserData();
+  }, [username, user]);
+
+  const handleSubscribe = async () => {
+    const userDocRef = doc(db, "users", authorId);
+
+    try {
+      await updateDoc(userDocRef, {
+        subscribers: arrayUnion(user.uid),
+      });
+      setSubscribers(subscribers + 1 || 0);
+      setIsSubscribed(true);
+    } catch (error) {
+      console.error("Error subscribing:", error);
+    }
+  };
+
+  const handleUnsubscribe = async () => {
+    const userDocRef = doc(db, "users", authorId);
+
+    try {
+      await updateDoc(userDocRef, {
+        subscribers: arrayRemove(user.uid),
+      });
+      setSubscribers(subscribers - 1 || 0);
+      setIsSubscribed(false);
+    } catch (error) {
+      console.error("Error unsubscribing:", error);
+    }
+  };
+
+  const handleLike = async () => {
+    const streamsQuery = query(
+      collection(db, "streams"),
+      where("author", "==", username)
+    );
+
+    const streamSnapshot = await getDocs(streamsQuery);
+    if (!streamSnapshot.empty) {
+      const streamDocRef = streamSnapshot.docs[0].ref;
+      const updateAction = hasLiked
+        ? arrayRemove(user.uid)
+        : arrayUnion(user.uid);
+
+      await updateDoc(streamDocRef, {
+        likedBy: updateAction,
+        likes: hasLiked ? likes - 1 : likes + 1,
+      });
+    }
+  };
+
+  const handleDislike = async () => {
+    const streamsQuery = query(
+      collection(db, "streams"),
+      where("author", "==", username)
+    );
+
+    const streamSnapshot = await getDocs(streamsQuery);
+    if (!streamSnapshot.empty) {
+      const streamDocRef = streamSnapshot.docs[0].ref;
+      const updateAction = hasDisliked
+        ? arrayRemove(user.uid)
+        : arrayUnion(user.uid);
+
+      await updateDoc(streamDocRef, {
+        dislikedBy: updateAction,
+        dislikes: hasDisliked ? dislikes - 1 : dislikes + 1,
+      });
+    }
+  };
+
+  if (!user) {
+    return <p>Loading...user not found</p>;
+  }
 
   return (
     <>
@@ -102,36 +257,67 @@ const StreamPage = ({ params }) => {
                     },
                   },
                 }}
-              />{" "}
+              />
               <h2 className="text-4xl font-bold text-white ml-4">
                 {streamName}
               </h2>
-              <div className="flex justify-between w-[70%]">
-                <div className="ml-4 my-2">
-                  <h2 className="text-2xl font-bold text-gray-400 ">
+              <div className="flex justify-between w-[80%]">
+                <div className="ml-4 my-2 flex">
+                  {" "}
+                  <CustomAvatar
+                    className="inline"
+                    src={creatorAvatar}
+                    alt={"username"}
+                    fallbackSrc={"https://github.com/shadcn.png"}
+                  />
+                  <h2 className="text-2xl font-bold text-gray-400 inline ml-3">
                     {username}
                   </h2>
-                  <span className="text-lg  text-gray-500">
-                    {subscribers} Subscribers
-                  </span>
                 </div>
-                <div className="flex items-center justify-between w-[15%] mx-4 ">
-                  <Button className="bg-gray-200 px-2">
-                    {likes}
-                    <AiOutlineLike />
+                <div className="flex items-center justify-between w-[50%] mx-4 ">
+                  <Button
+                    onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
+                    className={`mt-2 ${
+                      isSubscribed ? "bg-red-500" : "bg-blue-500"
+                    }`}
+                  >
+                    {isSubscribed ? "Unsubscribe" : "Subscribe"}
                   </Button>
-                  <Button className="bg-gray-200 px-2">
-                    <AiOutlineDislike />
-                  </Button>
+                  <div className="flex items-center justify-evenly w-[30%]">
+                    <Button
+                      onClick={handleLike}
+                      className={`bg-gray-200 px-3 ${
+                        hasLiked ? "text-green-500" : ""
+                      }`}
+                    >
+                      {likes}
+                      {hasLiked ? <AiFillLike /> : <AiOutlineLike />}
+                    </Button>
+                    <Button
+                      onClick={handleDislike}
+                      className={`bg-gray-200 px-3 ${
+                        hasDisliked ? "text-red-500" : ""
+                      }`}
+                    >
+                      {dislikes}
+                      {hasDisliked ? <AiFillDislike /> : <AiOutlineDislike />}
+                    </Button>
+                  </div>
                 </div>
               </div>
+              <span className="text-lg text-gray-500 ml-4 my-2">
+                {subscribers} Subscribers
+              </span>
+              <span className="text-lg text-gray-500 ml-4 my-2 block">
+                Started {timeElapsed}
+              </span>
             </div>
           ) : (
             <p className="text-white">Loading stream...</p>
           )}
         </div>
         {/* chat section */}
-        <div className="w-full lg:w-[30%]  p-4 bg-gray-800 overflow-y-auto rounded-t-lg">
+        <div className="w-full lg:w-[30%] p-4 bg-gray-800 overflow-y-auto rounded-t-lg">
           <h2 className="text-xl font-bold text-white">Live Chat</h2>
           <div className="mt-4">
             {/* Chat messages will go here */}
@@ -151,6 +337,6 @@ const StreamPage = ({ params }) => {
       </div>
     </>
   );
-};  
+};
 
 export default StreamPage;

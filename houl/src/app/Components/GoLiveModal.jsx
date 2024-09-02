@@ -63,6 +63,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
         streamUrl: streamUrl,
         streamStartedAt: Date.now(),
         likes: 0,
+        dislikes:0,
         chat: [],
       });
 
