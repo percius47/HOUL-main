@@ -330,7 +330,7 @@ const StreamPage = ({ params }) => {
     return (
       <>
         <TopBar username={user.email} userId={user.uid} />
-        <div className="flex flex-col lg:flex-row p-4 h-screen justify-between bg-gray-900">
+        <div className="flex flex-col lg:flex-row p-4 justify-between bg-gray-900 h-max">
           <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4">
             {streamUrl ? (
               <div className="relative">
@@ -353,7 +353,7 @@ const StreamPage = ({ params }) => {
                     },
                   }}
                 />
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mt-2">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl xl:mt-[14rem] font-bold text-white mt-2">
                   {streamName}
                 </h2>
                 <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
