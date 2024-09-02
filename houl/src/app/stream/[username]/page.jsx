@@ -275,221 +275,224 @@ const StreamPage = ({ params }) => {
     }
   };
   //delete sent messages
- const handleDeleteMessage = async (messageToDelete) => {
-   try {
-     const streamsQuery = query(
-       collection(db, "streams"),
-       where("author", "==", username)
-     );
+  const handleDeleteMessage = async (messageToDelete) => {
+    try {
+      const streamsQuery = query(
+        collection(db, "streams"),
+        where("author", "==", username)
+      );
 
-     const streamSnapshot = await getDocs(streamsQuery);
+      const streamSnapshot = await getDocs(streamsQuery);
 
-     if (!streamSnapshot.empty) {
-       const streamDocRef = streamSnapshot.docs[0].ref;
+      if (!streamSnapshot.empty) {
+        const streamDocRef = streamSnapshot.docs[0].ref;
 
-       // Remove the selected message from Firestore
-       await updateDoc(streamDocRef, {
-         chat: arrayRemove(messageToDelete),
-       });
+        // Remove the selected message from Firestore
+        await updateDoc(streamDocRef, {
+          chat: arrayRemove(messageToDelete),
+        });
 
-       // Update local state after deletion
-       setChatMessages((prevMessages) =>
-         prevMessages.filter(
-           (msg) => msg.chatTimestamp !== messageToDelete.chatTimestamp
-         )
-       );
-     }
-   } catch (error) {
-     console.error("Error deleting message:", error);
-   }
- };
+        // Update local state after deletion
+        setChatMessages((prevMessages) =>
+          prevMessages.filter(
+            (msg) => msg.chatTimestamp !== messageToDelete.chatTimestamp
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    }
+  };
 
- const formatTimestamp = (timestamp) => {
-   const date = new Date(timestamp.seconds * 1000);
-   const hours = date.getHours();
-   const minutes = date.getMinutes();
-   const ampm = hours >= 12 ? "pm" : "am";
-   const formattedHours = hours % 12 || 12;
-   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-   return `${formattedHours}:${formattedMinutes} ${ampm}`;
- };
-// loggg
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp.seconds * 1000);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "pm" : "am";
+    const formattedHours = hours % 12 || 12;
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    return `${formattedHours}:${formattedMinutes} ${ampm}`;
+  };
+  // loggg
   console.log(
     "---chatmessage author, viewerUsername,streamer",
     chatMessages[0]?.chatAuthor,
     viewerUsername,
     username,
-    chatMessages[0]?.chatAuthor===
-    viewerUsername,viewerUsername===username
+    chatMessages[0]?.chatAuthor === viewerUsername,
+    viewerUsername === username
   );
   if (!user) {
     return <p>Loading...user not found</p>;
   }
 
-
-    return (
-      <>
-        <TopBar username={user.email} userId={user.uid} />
-        <div className="flex flex-col lg:flex-row p-4 justify-between bg-gray-900 h-max">
-          <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4">
-            {streamUrl ? (
-              <div className="relative">
-                <ReactPlayer
-                  url={streamUrl}
-                  playing={true}
-                  controls
-                  className="react-player"
-                  width="100%"
-                  height="auto"
-                  style={{ maxHeight: "75vh" }}
-                  config={{
-                    file: {
-                      attributes: {
-                        autoPlay: true,
-                      },
-                      hlsOptions: {
-                        startPosition: -1,
-                      },
+  return (
+    <>
+      <TopBar username={user.email} userId={user.uid} />
+      <div className="flex flex-col lg:flex-row p-4 justify-between bg-gray-900 h-max">
+        <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4">
+          {streamUrl ? (
+            <div className="relative">
+              <ReactPlayer
+                url={streamUrl}
+                playing={true}
+                controls
+                className="react-player"
+                width="100%"
+                height="auto"
+                style={{ maxHeight: "75vh" }}
+                config={{
+                  file: {
+                    attributes: {
+                      autoPlay: true,
                     },
-                  }}
-                />
-                <h2 className="text-2xl sm:text-3xl md:text-4xl xl:mt-[14rem] font-bold text-white mt-2">
-                  {streamName}
-                </h2>
-                <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
-                  <div className="flex items-center">
+                    hlsOptions: {
+                      startPosition: -1,
+                    },
+                  },
+                }}
+              />
+              <h2 className="text-2xl sm:text-3xl md:text-4xl xl:mt-[14rem] font-bold text-white mt-2">
+                {streamName}
+              </h2>
+              <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
+                <div className="flex items-center">
+                  <CustomAvatar
+                    className="inline"
+                    src={creatorAvatar}
+                    alt={"username"}
+                    fallbackSrc={"https://github.com/shadcn.png"}
+                  />
+                  <div className="ml-3">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-400">
+                      {username}
+                    </h2>
+                    <span className="text-sm sm:text-md text-gray-500">
+                      {subscribers} Subscribers
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                  <Button
+                    onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
+                    className={`${isSubscribed ? "bg-red-500" : "bg-blue-500"}`}
+                  >
+                    {isSubscribed ? "Unsubscribe" : "Subscribe"}
+                  </Button>
+                  <Button
+                    onClick={handleLike}
+                    className={`bg-gray-200 px-2 ${
+                      hasLiked ? "text-green-700" : ""
+                    }`}
+                  >
+                    {likes}
+                    {hasLiked ? (
+                      <AiFillLike className="ml-1" />
+                    ) : (
+                      <AiOutlineLike className="ml-1" />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleDislike}
+                    className={`bg-gray-200 px-2 ${
+                      hasDisliked ? "text-red-500" : ""
+                    }`}
+                  >
+                    {dislikes}
+                    {hasDisliked ? (
+                      <AiFillDislike className="ml-1" />
+                    ) : (
+                      <AiOutlineDislike className="ml-1" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <span className="text-sm sm:text-lg text-gray-500 mt-2">
+                Started {timeElapsed}
+              </span>
+            </div>
+          ) : (
+            <p className="text-white">Loading stream...</p>
+          )}
+        </div>
+        {/* chat section */}
+        <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative">
+          <h2 className="text-xl font-bold text-white ml-2">Live Chat</h2>
+          {/* Chat messages container */}
+          <div
+            className="flex-grow mt-4 space-y-4 overflow-y-auto pr-2"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            <style jsx>{`
+              ::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            {/* Chat messages display */}
+            {chatMessages.length > 0 ? (
+              chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between space-x-2 pl-2 hover:bg-gray-900 pt-1 group"
+                >
+                  <div className="w-[80%] flex ">
                     <CustomAvatar
                       className="inline"
-                      src={creatorAvatar}
-                      alt={"username"}
+                      src={msg.photoUrl}
+                      alt={msg.chatAuthor}
                       fallbackSrc={"https://github.com/shadcn.png"}
                     />
-                    <div className="ml-3">
-                      <h2 className="text-lg sm:text-xl font-bold text-gray-400">
-                        {username}
-                      </h2>
-                      <span className="text-sm sm:text-md text-gray-500">
-                        {subscribers} Subscribers
+                    <div className="text-white ml-[5%]">
+                      <p>
+                        <strong>{msg.chatAuthor}</strong>: {msg.message}
+                      </p>
+                      <span className="text-xs text-gray-400">
+                        {formatTimestamp(msg.chatTimestamp)}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-                    <Button
-                      onClick={
-                        isSubscribed ? handleUnsubscribe : handleSubscribe
-                      }
-                      className={`${
-                        isSubscribed ? "bg-red-500" : "bg-blue-500"
-                      }`}
+                  {(msg.chatAuthor === viewerUsername ||
+                    username === viewerUsername) && (
+                    <button
+                      className="text-red-500 text-xl invisible group-hover:visible"
+                      onClick={() => handleDeleteMessage(msg)}
                     >
-                      {isSubscribed ? "Unsubscribe" : "Subscribe"}
-                    </Button>
-                    <Button
-                      onClick={handleLike}
-                      className={`bg-gray-200 px-2 ${
-                        hasLiked ? "text-green-700" : ""
-                      }`}
-                    >
-                      {likes}
-                      {hasLiked ? (
-                        <AiFillLike className="ml-1" />
-                      ) : (
-                        <AiOutlineLike className="ml-1" />
-                      )}
-                    </Button>
-                    <Button
-                      onClick={handleDislike}
-                      className={`bg-gray-200 px-2 ${
-                        hasDisliked ? "text-red-500" : ""
-                      }`}
-                    >
-                      {dislikes}
-                      {hasDisliked ? (
-                        <AiFillDislike className="ml-1" />
-                      ) : (
-                        <AiOutlineDislike className="ml-1" />
-                      )}
-                    </Button>
-                  </div>
+                      <MdDelete className="text-red-900 items-center mr-3" />
+                    </button>
+                  )}
                 </div>
-                <span className="text-sm sm:text-lg text-gray-500 mt-2">
-                  Started {timeElapsed}
-                </span>
-              </div>
+              ))
             ) : (
-              <p className="text-white">Loading stream...</p>
+              <p className="text-gray-500 ml-2">No messages yet.</p>
             )}
           </div>
-          {/* chat section */}
-          <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative">
-            <h2 className="text-xl font-bold text-white ml-2">Live Chat</h2>
-            {/* Chat messages container */}
-            <div className="flex-grow mt-4 space-y-4 overflow-y-auto pr-2">
-              {/* Chat messages display */}
-              {chatMessages.length > 0 ? (
-                chatMessages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between space-x-2 pl-2 hover:bg-gray-900 pt-1 group"
-                  >
-                    <div className="w-[80%] flex ">
-                      <CustomAvatar
-                        className="inline"
-                        src={msg.photoUrl}
-                        alt={msg.chatAuthor}
-                        fallbackSrc={"https://github.com/shadcn.png"}
-                      />
-                      <div className="text-white ml-[5%]">
-                        <p>
-                          <strong>{msg.chatAuthor}</strong>: {msg.message}
-                        </p>
-                        <span className="text-xs text-gray-400">
-                          {formatTimestamp(msg.chatTimestamp)}
-                        </span>
-                      </div>
-                    </div>
-                    {(msg.chatAuthor === viewerUsername ||
-                      username === viewerUsername) && (
-                      <button
-                        className="text-red-500 text-xl invisible group-hover:visible"
-                        onClick={() => handleDeleteMessage(msg)}
-                      >
-                        <MdDelete className="text-red-900 items-center mr-3" />
-                      </button>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 ml-2">No messages yet.</p>
-              )}
-            </div>
-            {/* Chat input field and send button */}
-            <div className="flex items-center w-full bg-purple-700 pl-1 py-1">
-              <CustomAvatar
-                className="inline"
-                src={user.photoURL}
-                alt={user.chatAuthor}
-                fallbackSrc={"https://github.com/shadcn.png"}
-              />
-              <input
-                type="text"
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none"
-              />
-              <Button
-                variant="houl"
-                onClick={handleSendMessage}
-                className="bg-purple-950 text-white rounded-r mr-1 p-4"
-              >
-                Houl
-              </Button>
-            </div>
+          {/* Chat input field and send button */}
+          <div className="flex items-center w-full bg-purple-700 pl-1 py-1">
+            <CustomAvatar
+              className="inline"
+              src={user.photoURL}
+              alt={user.chatAuthor}
+              fallbackSrc={"https://github.com/shadcn.png"}
+            />
+            <input
+              type="text"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none"
+            />
+            <Button
+              variant="houl"
+              onClick={handleSendMessage}
+              className="bg-purple-950 text-white rounded-r mr-1 p-4"
+            >
+              Houl
+            </Button>
           </div>
         </div>
-      </>
-    );
+      </div>
+    </>
+  );
 };
 
 export default StreamPage;
