@@ -18,13 +18,14 @@ export default function Home() {
     const userDoc = doc(db, "users", user.uid);
 
     const docSnap = await getDoc(userDoc);
+// console.log("photourl---",user,user?.photoURL);
 
     if (!docSnap.exists()) {
       await setDoc(userDoc, {
         username: user.email.match(/^([^@]+)/)[0],
         isStreaming: false,
         subscribers: 0,
-        photoUrl: user?.photoUrl,
+        photoUrl: user?.photoURL,
         serverURL: "rtmp://13.234.177.100:1935/houl1/live1", //default channel
         streamKey: "live1", //default key
         streamUrl:
