@@ -26,6 +26,7 @@ import { MdDelete } from "react-icons/md";
 import TopBar from "@/app/Components/Topbar";
 import { onAuthStateChanged } from "firebase/auth";
 import CustomAvatar from "@/app/Components/CustomAvatar";
+import Image from "next/image";
 
 const StreamPage = ({ params }) => {
   const { username } = params;
@@ -323,7 +324,16 @@ const StreamPage = ({ params }) => {
     viewerUsername === username
   );
   if (!user) {
-    return <p>Loading...user not found</p>;
+    return (
+      <Image
+        loading="eager"
+        src="/houlSvg.svg"
+        className="rotate"
+        height={200}
+        width={200}
+        alt="Houl"
+      />
+    );
   }
 
   return (
@@ -352,7 +362,7 @@ const StreamPage = ({ params }) => {
                   },
                 }}
               />
-              <h2 className="text-2xl sm:text-3xl md:text-4xl xl:mt-[14rem] font-bold text-white mt-2">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white mt-2">
                 {streamName}
               </h2>
               <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
@@ -372,7 +382,8 @@ const StreamPage = ({ params }) => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                {/* show only if the viewer is not author */}
+              {viewerUsername!==username && <div className="flex items-center space-x-2 mt-2 sm:mt-0">
                   <Button
                     onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
                     className={`${isSubscribed ? "bg-red-500" : "bg-blue-500"}`}
@@ -405,7 +416,7 @@ const StreamPage = ({ params }) => {
                       <AiOutlineDislike className="ml-1" />
                     )}
                   </Button>
-                </div>
+                </div>}
               </div>
               <span className="text-sm sm:text-lg text-gray-500 mt-2">
                 Started {timeElapsed}
@@ -479,12 +490,12 @@ const StreamPage = ({ params }) => {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               placeholder="Type a message..."
-              className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none"
+              className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none w-[60%]"
             />
             <Button
-              variant="houl"
+              // variant="houl"
               onClick={handleSendMessage}
-              className="bg-purple-950 text-white rounded-r mr-1 p-4"
+              className="bg-purple-950 text-white  mr-1 p-4"
             >
               Houl
             </Button>

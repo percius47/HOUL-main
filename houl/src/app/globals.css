@@ -73,6 +73,23 @@
 .react-player > div {
   position: absolute; 
 }
+.rotate {  position: absolute;
+  right: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+
+  animation: rotation 2s infinite linear;
+}
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}
 @layer base {
   * {
     @apply border-border;
