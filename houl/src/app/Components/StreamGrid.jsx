@@ -5,11 +5,14 @@ import { db } from "../firebase/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import ReactPlayer from "react-player";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const StreamGrid = () => {
   const [streams, setStreams] = useState([]);
   const [timeElapsed, setTimeElapsed] = useState({});
- const router = useRouter();
+  const [loading, setLoading] = useState(true); // Loading state
+  const router = useRouter();
+
   useEffect(() => {
     // Query the "streams" collection to get all active streams
     const streamsQuery = collection(db, "streams");
@@ -20,6 +23,7 @@ const StreamGrid = () => {
         ...doc.data(),
       }));
       setStreams(streamsData);
+      setLoading(false); // Stop loading once data is fetched
     });
 
     return () => unsubscribe();
@@ -30,8 +34,7 @@ const StreamGrid = () => {
       const currentTimes = {};
 
       streams.forEach((stream) => {
-        const timeDifference =
-          Date.now() - stream.streamStartedAt;
+        const timeDifference = Date.now() - stream.streamStartedAt;
         const minutes = Math.floor(timeDifference / (1000 * 60));
         const hours = Math.floor(minutes / 60);
         const remainingMinutes = minutes % 60;
@@ -56,15 +59,24 @@ const StreamGrid = () => {
     return () => clearInterval(intervalId);
   }, [streams]);
 
-
   const handleStreamClick = (username) => {
     router.push(`/stream/${username}`);
   };
 
-  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-      {streams.length > 0 ? (
+      {loading ? (
+        // Show loader while loading
+        <Image
+          loading="eager"
+          src="/houlSvg.svg"
+          className="rotate"
+          height={200}
+          width={200}
+          alt="Houl"
+        />
+      ) : streams.length > 0 ? (
+        // Show streams after loading is complete
         streams.map((stream) => (
           <div
             key={stream.id}

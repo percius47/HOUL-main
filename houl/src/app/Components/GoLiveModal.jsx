@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import ReactPlayer from "react-player";
+import Image from "next/image";
 
 const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const [serverUrlCopied, setServerUrlCopied] = useState(false);
@@ -80,7 +81,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
       <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full">
         {!isPreviewing ? (
           <>
@@ -155,7 +156,14 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                 }}
               />
             ) : (
-              <p>Loading stream...</p>
+              <Image
+                loading="eager"
+                src="/houlSvg.svg"
+                className="rotate"
+                height={200}
+                width={200}
+                alt="Houl"
+              />
             )}
             <div className="mb-4">
               <label className="block font-medium text-white">
