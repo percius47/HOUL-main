@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { auth } from "../firebase/firebase";
 import { useRouter } from "next/navigation";
-
+import Image from "next/image";
 const Login = ({ onLogin }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -35,7 +35,22 @@ const Login = ({ onLogin }) => {
       setError(err.message);
     }
   };
+  const handleGuestLogin = async (e) => {
+    e.preventDefault();
+    try {
+      let userCredential;
 
+      userCredential = await signInWithEmailAndPassword(
+        auth,
+        "guest@a.com",
+        "111111"
+      );
+
+      handleLogin(userCredential.user);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
   const handleEmailPasswordAuth = async (e) => {
     e.preventDefault();
     try {
@@ -61,14 +76,11 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
+      <Image src="/houlSvg.svg" width={100} height={100} />
       <h1 className="my-3 text-7xl font-bold text-purple-700">H O U L</h1>
-      <h2 className="mb-4 text-2xl font-bold">
+      {/* <h2 className="mb-4 text-2xl font-bold">
         {isSignUp ? "Sign Up" : "Login"}
-      </h2>
-
-      <Button className="bg-blue-600 mb-4" onClick={handleGoogleLogin}>
-        {isSignUp ? "Sign Up with Google" : "Login with Google"}
-      </Button>
+      </h2> */}
 
       <form
         onSubmit={handleEmailPasswordAuth}
@@ -90,13 +102,24 @@ const Login = ({ onLogin }) => {
           placeholder="Enter your password"
           required
         />
-        <Button type="submit" className="w-full">
+        <Button
+          type="submit"
+          className="w-full bg-purple-800 text-white text-lg"
+        >
           {isSignUp ? "Sign Up" : "Login"}
         </Button>
       </form>
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
-
+      {/* <Button className="bg-blue-600 mt-4" onClick={handleGoogleLogin}>
+        {isSignUp ? "Sign Up with Google" : "Login with Google"}
+      </Button> */}
+      <Button
+        className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
+        onClick={handleGuestLogin}
+      >
+        Login as Guest
+      </Button>
       <p className="mt-4">
         {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
         <Button variant="link" onClick={() => setIsSignUp(!isSignUp)}>

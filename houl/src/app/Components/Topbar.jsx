@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 import { signOut } from "firebase/auth";
+import Image from "next/image";
 
 const TopBar = ({ userId }) => {
   const [showModal, setShowModal] = useState(false);
@@ -118,14 +119,16 @@ const TopBar = ({ userId }) => {
   return (
     <>
       {/* TopBar */}
-      <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
-        <h1 className="text-xl font-bold text-purple-700">HOUL</h1>
+      <header className="flex justify-between items-center p-4 bg-purple-950 text-white">
+        <div className="flex items-center ">
+          <Image loading="eager" src="/houlSvg.svg" height={50} width={50} alt="Houl" />
+        </div>
 
         {/* Hamburger menu for small screens */}
         <div className="sm:hidden">
           <Button
             onClick={() => setIsDrawerOpen(true)}
-            className="bg-gray-700 p-2 rounded"
+            className="bg-houlPurple text-houlLight p-2 rounded"
           >
             <Menu className="text-white" />
           </Button>
@@ -169,18 +172,18 @@ const TopBar = ({ userId }) => {
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
         {/* Drawer panel */}
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full max-w-xs p-4 overflow-y-auto bg-gray-800 text-white">
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full max-w-xs p-4 overflow-y-auto bg-purple-950 text-gray">
           <div className="flex justify-between items-center mb-4">
             {/* <h2 className="text-lg font-bold">Menu</h2> */}
             <Button
               onClick={() => setIsDrawerOpen(false)}
-              className="bg-gray-700 text-white text-xl p-2 rounded fixed right-0 mt-8 mr-4"
+              // variant="houlButton"
+              className="bg-houlPurple text-houlLight text-xl p-2 rounded fixed right-0 mt-12 mr-4"
             >
-              
               <IoClose />
             </Button>
           </div>
-          <p className="text-center text-lg mt-14">Welcome, {username}</p>
+          <p className="text-center text-lg mt-14">Welcome {username}</p>
           <div className="mt-4 space-y-2">
             {isStreaming ? (
               <Button

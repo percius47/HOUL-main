@@ -13,6 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 222.2 47.4% 11.2%;
+    --houlPurple:#25064D,
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -59,6 +60,10 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+}
+.houlButton{
+  background-color: "yellow !important";
+  color: "#f0e7fd !important";
 }
 .react-player{
   height: auto !important;
