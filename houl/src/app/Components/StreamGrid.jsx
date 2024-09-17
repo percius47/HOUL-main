@@ -64,53 +64,67 @@ const StreamGrid = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+    <div className="relative min-h-screen">
       {loading ? (
         // Show loader while loading
-        <Image
-          loading="eager"
-          src="/houlSvg.svg"
-          className="rotate"
-          height={200}
-          width={200}
-          alt="Houl"
-        />
+        <div className="flex justify-center items-center h-screen">
+          <Image
+            loading="eager"
+            src="/houlSvg.svg"
+            className="rotate"
+            height={200}
+            width={200}
+            alt="Houl"
+          />
+        </div>
       ) : streams.length > 0 ? (
         // Show streams after loading is complete
-        streams.map((stream) => (
-          <div
-            key={stream.id}
-            className="bg-gray-800 p-4 rounded-lg cursor-pointer"
-            onClick={() => handleStreamClick(stream.author)}
-          >
-            <ReactPlayer
-              playsinline
-              controls
-              url={stream.streamUrl}
-              playing={true} // Auto-play the video
-              className="react-player"
-              config={{
-                file: {
-                  attributes: {
-                    autoPlay: true, // Ensure autoPlay is set
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+          {streams.map((stream) => (
+            <div
+              key={stream.id}
+              className="bg-gray-800 p-4 rounded-lg cursor-pointer"
+              onClick={() => handleStreamClick(stream.author)}
+            >
+              <ReactPlayer
+                playsinline
+                controls
+                url={stream.streamUrl}
+                playing={true} // Auto-play the video
+                className="react-player"
+                config={{
+                  file: {
+                    attributes: {
+                      autoPlay: true, // Ensure autoPlay is set
+                    },
+                    hlsOptions: {
+                      startPosition: -1, // Automatically start at the live edge
+                    },
                   },
-                  hlsOptions: {
-                    startPosition: -1, // Automatically start at the live edge
-                  },
-                },
-              }}
-            />
-            <h5 className="text-lg font-bold mb-2 text-white">
-              {stream.streamName}
-            </h5>
-            <p className="text-sm text-gray-400">Author: {stream.author}</p>
-            <p className="text-sm text-gray-400">
-              {timeElapsed[stream.id] || "Calculating..."}
-            </p>
-          </div>
-        ))
+                }}
+              />
+              <h5 className="text-lg font-bold mb-2 text-white">
+                {stream.streamName}
+              </h5>
+              <p className="text-sm text-gray-400">Author: {stream.author}</p>
+              <p className="text-sm text-gray-400">
+                {timeElapsed[stream.id] || "Calculating..."}
+              </p>
+            </div>
+          ))}
+        </div>
       ) : (
-        <p className="text-white">No active streams available.</p>
+        // No active streams available - center this content in the middle of the screen
+        <div className="absolute inset-0 flex flex-col justify-center items-center">
+          <Image
+            loading="eager"
+            src="/houlSvg.svg"
+            height={200}
+            width={200}
+            alt="Houl"
+          />
+          <p className="text-white mt-4">No active streams available.</p>
+        </div>
       )}
     </div>
   );

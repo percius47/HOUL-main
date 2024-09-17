@@ -97,7 +97,7 @@ const TopBar = ({ userId }) => {
         // Update the isStreaming field in the user's document
         const userDocRef = doc(db, "users", userId);
         await updateDoc(userDocRef, { isStreaming: false });
-
+        router.push("/");
         console.log("Stream stopped successfully.");
       } else {
         console.log("No active stream found for the user.");
@@ -121,7 +121,17 @@ const TopBar = ({ userId }) => {
       {/* TopBar */}
       <header className="flex justify-between items-center p-4 bg-purple-950 text-white">
         <div className="flex items-center ">
-          <Image loading="eager" src="/houlSvg.svg" height={50} width={50} alt="Houl" className="cursor-pointer" onClick={()=>{ router.push(`/`);}} />
+          <Image
+            loading="eager"
+            src="/houlSvg.svg"
+            height={50}
+            width={50}
+            alt="Houl"
+            className="cursor-pointer"
+            onClick={() => {
+              router.push(`/`);
+            }}
+          />
         </div>
 
         {/* Hamburger menu for small screens */}
