@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import GoLiveModal from "./GoLiveModal";
 import { IoClose } from "react-icons/io5";
-import { Menu, SidebarCloseIcon } from "lucide-react"; // Import an icon for the drawer toggle
+import { Menu } from "lucide-react"; // Import an icon for the drawer toggle
 import { Dialog, DialogPanel } from "@headlessui/react"; // Using Headless UI for the drawer
 import {
   doc,
@@ -29,22 +29,24 @@ const TopBar = ({ userId }) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [username, setUsername] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State for controlling drawer visibility
+  const [credits, setCredits] = useState(100); // Initialize credits with default 100
 
   const router = useRouter();
 
   useEffect(() => {
     if (!userId) return;
 
-    const userDoc = doc(db, "users", userId);
+    const userDocRef = doc(db, "users", userId);
 
-    // Fetch username and isStreaming status from Firestore
+    // Fetch username, credits, and isStreaming status from Firestore
     const fetchUserData = async () => {
       try {
-        const userSnapshot = await getDoc(userDoc);
+        const userSnapshot = await getDoc(userDocRef);
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
           setUsername(userData.username);
           setIsStreaming(userData.isStreaming);
+          setCredits(userData?.credits>-1?userData?.credits : -1); // Default to 100 if credits don't exist
         } else {
           console.log("No such document!");
         }
@@ -55,11 +57,12 @@ const TopBar = ({ userId }) => {
 
     fetchUserData();
 
-    // Listen for real-time updates on the user's streaming status
-    const unsubscribe = onSnapshot(userDoc, (docSnapshot) => {
+    // Real-time subscription to updates in user's Firestore document
+    const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
         setIsStreaming(data.isStreaming);
+        setCredits(data?.credits>-1?data?.credits : -1); // Update credits in real-time
       }
     });
 
@@ -146,7 +149,10 @@ const TopBar = ({ userId }) => {
 
         {/* Normal buttons for larger screens */}
         <div className="hidden sm:flex items-center space-x-4">
-          <p>Welcome, {username}</p>
+          <p>Welcome {username}!</p>
+
+          {/* Display credits */}
+          <div className="flex text-white w-[3rem] items-center justify-between">x{credits} <Image src="/chirpsIcon.png" height={20} width={20}/></div>
           {isStreaming ? (
             <Button className="bg-red-600" onClick={handleStopStream}>
               Stop Stream
@@ -184,16 +190,15 @@ const TopBar = ({ userId }) => {
         {/* Drawer panel */}
         <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full max-w-xs p-4 overflow-y-auto bg-purple-950 text-gray">
           <div className="flex justify-between items-center mb-4">
-            {/* <h2 className="text-lg font-bold">Menu</h2> */}
             <Button
               onClick={() => setIsDrawerOpen(false)}
-              // variant="houlButton"
               className="bg-houlPurple text-houlLight text-xl p-2 rounded fixed right-0 mt-12 mr-4"
             >
               <IoClose />
             </Button>
           </div>
           <p className="text-center text-lg mt-14">Welcome {username}</p>
+          <p className="text-center text-lg mt-2 flex items-center w-[20%] italic text-gray-200 mx-auto justify-between">x{credits}<Image src="/chirpsIcon.png" height={20} width={20}/></p>
           <div className="mt-4 space-y-2">
             {isStreaming ? (
               <Button

@@ -27,6 +27,9 @@ import TopBar from "@/app/Components/Topbar";
 import { onAuthStateChanged } from "firebase/auth";
 import CustomAvatar from "@/app/Components/CustomAvatar";
 import Image from "next/image";
+import toast, { Toaster } from "react-hot-toast"; // Import toast for notifications
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { CoinsIcon } from "lucide-react"; // Chirps Icon
 
 const StreamPage = ({ params }) => {
   const { username } = params;
@@ -37,6 +40,7 @@ const StreamPage = ({ params }) => {
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [user, setUser] = useState(null);
+  const [viewerCredits, setViewerCredits] = useState(0); // Store viewer's credits
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
   const [hasDisliked, setHasDisliked] = useState(false);
@@ -46,14 +50,18 @@ const StreamPage = ({ params }) => {
   const [timeElapsed, setTimeElapsed] = useState("");
   const [messageInput, setMessageInput] = useState(""); // New state for chat input
   const [viewerUsername, setViewerUsername] = useState(null);
+  const [isChirpsModalOpen, setIsChirpsModalOpen] = useState(false);
+  const [chirpsAmount, setChirpsAmount] = useState(5); // Number of chirps to send
+  const [chirpsMessage, setChirpsMessage] = useState(""); // Message accompanying chirps
+  const [isBuyChirpsModalOpen, setIsBuyChirpsModalOpen] = useState(false); // Modal for buying chirps
 
   useEffect(() => {
     // Monitor user authentication status
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Fetch viewer's username after setting the user
-        await fetchViewerUsername(currentUser.uid);
+        // Fetch viewer's username and credits after setting the user
+        await fetchViewerData(currentUser.uid);
       } else {
         setUser(null);
       }
@@ -61,6 +69,20 @@ const StreamPage = ({ params }) => {
 
     return () => unsubscribeAuth();
   }, []);
+
+  const fetchViewerData = async (uid) => {
+    try {
+      const userDocRef = doc(db, "users", uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setViewerUsername(data.username); // Set the viewer's username
+        setViewerCredits(data.credits || 0); // Set the viewer's credits (default 0)
+      }
+    } catch (error) {
+      console.error("Error fetching viewer data:", error);
+    }
+  };
 
   useEffect(() => {
     if (!username) return;
@@ -110,22 +132,9 @@ const StreamPage = ({ params }) => {
 
     return () => clearInterval(intervalId);
   }, [streamTime]);
-  // Fetch viewer username
-  const fetchViewerUsername = async (uid) => {
-    try {
-      const userDocRef = doc(db, "users", uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        setViewerUsername(userDoc.data().username); // Correctly set the viewer's username
-      }
-    } catch (error) {
-      console.error("Error fetching viewer username:", error);
-    }
-  };
 
   const fetchAuthorUid = async () => {
     try {
-      // Query the "users" collection to find the user with the given username
       const usersQuery = query(
         collection(db, "users"),
         where("username", "==", username)
@@ -134,8 +143,6 @@ const StreamPage = ({ params }) => {
       const querySnapshot = await getDocs(usersQuery);
       if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
-        console.log("author uid", userDoc.id);
-
         return userDoc.id;
       } else {
         console.log("No user found with the provided username.");
@@ -153,7 +160,6 @@ const StreamPage = ({ params }) => {
     const fetchUserData = async () => {
       const authorUid = await fetchAuthorUid(username);
       setAuthorId(authorUid);
-      console.log("author uid", authorUid);
 
       const userDocRef = doc(db, "users", authorUid);
       const userDoc = await getDoc(userDocRef);
@@ -172,15 +178,35 @@ const StreamPage = ({ params }) => {
     fetchUserData();
   }, [username, user]);
 
+  // Handle subscribe logic
   const handleSubscribe = async () => {
+    if (viewerCredits < 25) {
+      toast.error(`Get more credits to subscribe to ${username}`, {
+        position: "bottom-center",
+      });
+      return;
+    }
+
     const userDocRef = doc(db, "users", authorId);
+    const viewerDocRef = doc(db, "users", user.uid);
 
     try {
       await updateDoc(userDocRef, {
         subscribers: arrayUnion(user.uid),
       });
+
+      // Deduct 25 credits from the viewer
+      await updateDoc(viewerDocRef, {
+        credits: viewerCredits - 25,
+      });
+
       setSubscribers(subscribers + 1 || 0);
       setIsSubscribed(true);
+      setViewerCredits(viewerCredits - 25); // Update credits in state
+
+      toast.success(`Subscribed successfully to ${username}`, {
+        position: "bottom-center",
+      });
     } catch (error) {
       console.error("Error subscribing:", error);
     }
@@ -240,8 +266,68 @@ const StreamPage = ({ params }) => {
     }
   };
 
-  // Function to handle sending a chat message
-  const handleSendMessage = async () => {
+  // Handle sending chirps modal logic
+  const handleSendChirps = async () => {
+    if (viewerCredits < chirpsAmount) {
+      toast.error(
+        `You don't have enough credits to send ${chirpsAmount} chirps`,
+        {
+          position: "bottom-center",
+        }
+      );
+      return;
+    }
+
+    const viewerDocRef = doc(db, "users", user.uid);
+
+    try {
+      // Deduct chirps (credits) from the viewer
+      await updateDoc(viewerDocRef, {
+        credits: viewerCredits - chirpsAmount,
+      });
+
+      setViewerCredits(viewerCredits - chirpsAmount);
+      if (chirpsMessage.length > 0) {
+        handleSendMessage("chirp", chirpsAmount);
+      }
+      // Show chirps message to everyone
+      setIsChirpsModalOpen(false);
+      toast.success(`You chirped x${chirpsAmount}!`, {
+        position: "bottom-center",
+      });
+
+      // Show big modal for all viewers
+      setTimeout(() => {
+        toast(
+          `${
+            chirpsMessage.length > 0
+              ? `${chirpsMessage} x${chirpsAmount}chirps!`
+              : `🎉 ${viewerUsername} sent ${chirpsAmount} chirps!`
+          }`,
+          {
+            duration: 3000,
+            position: "center",
+            style: {
+              backgroundColor: "#f59e0b",
+              color: "#fff",
+              padding: "3rem",
+              position: "absolute",
+              right: "0",
+              left: "0",
+              top: "0",
+              bottom: "0",
+              margin: "auto",
+            },
+          }
+        );
+      }, 1000);
+      setChirpsMessage("");
+    } catch (error) {
+      console.error("Error sending chirps:", error);
+    }
+  };
+
+  const handleSendMessage = async (messageType, chirpAmount) => {
     if (!messageInput.trim()) return;
 
     const streamsQuery = query(
@@ -254,7 +340,6 @@ const StreamPage = ({ params }) => {
     if (!streamSnapshot.empty) {
       const streamDocRef = streamSnapshot.docs[0].ref;
 
-      // Fetch the user's username from the "users" collection
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
       const chatAuthor = userDoc.exists()
@@ -265,6 +350,8 @@ const StreamPage = ({ params }) => {
         chatAuthor: chatAuthor,
         message: messageInput,
         chatTimestamp: new Date(),
+        messageType: messageType === "chirp" ? "chirp" : "normal",
+        chirpAmount: messageType === "chirp" ? `${chirpAmount}` : 0,
         photoUrl: user.photoURL || "https://github.com/shadcn.png",
       };
 
@@ -275,7 +362,7 @@ const StreamPage = ({ params }) => {
       setMessageInput("");
     }
   };
-  //delete sent messages
+
   const handleDeleteMessage = async (messageToDelete) => {
     try {
       const streamsQuery = query(
@@ -288,12 +375,10 @@ const StreamPage = ({ params }) => {
       if (!streamSnapshot.empty) {
         const streamDocRef = streamSnapshot.docs[0].ref;
 
-        // Remove the selected message from Firestore
         await updateDoc(streamDocRef, {
           chat: arrayRemove(messageToDelete),
         });
 
-        // Update local state after deletion
         setChatMessages((prevMessages) =>
           prevMessages.filter(
             (msg) => msg.chatTimestamp !== messageToDelete.chatTimestamp
@@ -314,15 +399,37 @@ const StreamPage = ({ params }) => {
     const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
-  // loggg
-  console.log(
-    "---chatmessage author, viewerUsername,streamer",
-    chatMessages[0]?.chatAuthor,
-    viewerUsername,
-    username,
-    chatMessages[0]?.chatAuthor === viewerUsername,
-    viewerUsername === username
-  );
+
+  const openBuyChirpsModal = () => {
+    setIsBuyChirpsModalOpen(true);
+  };
+  const handleBuyChirps = async (chirps) => {
+    const viewerDocRef = doc(db, "users", user.uid);
+
+    try {
+      // Add the purchased chirps to the user's current credits
+      await updateDoc(viewerDocRef, {
+        credits: viewerCredits + chirps,
+      });
+
+      // Update local state with new credits
+      setViewerCredits(viewerCredits + chirps);
+
+      // Close the Buy Chirps modal
+      setIsBuyChirpsModalOpen(false);
+
+      // Show a success toast
+      toast.success(`You successfully bought ${chirps} chirps!`, {
+        position: "bottom-center",
+      });
+    } catch (error) {
+      console.error("Error buying chirps:", error);
+      toast.error("Failed to buy chirps. Please try again.", {
+        position: "bottom-center",
+      });
+    }
+  };
+
   if (!user) {
     return (
       <Image
@@ -339,8 +446,23 @@ const StreamPage = ({ params }) => {
   return (
     <>
       <TopBar username={user.email} userId={user.uid} />
+      <Toaster
+        toastOptions={{
+          success: {
+            style: {
+              background: "#06b500",
+            },
+          },
+          error: {
+            style: {
+              background: "#d51e1e",
+              bottom: 0,
+            },
+          },
+        }}
+      />
       <div className="flex flex-col lg:flex-row p-4 justify-between bg-gray-900 h-max">
-        <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4">
+        <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4 relative">
           {streamUrl ? (
             <div className="relative">
               <ReactPlayer
@@ -382,56 +504,68 @@ const StreamPage = ({ params }) => {
                     </span>
                   </div>
                 </div>
-                {/* show only if the viewer is not author */}
-              {viewerUsername!==username && <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-                  <Button
-                    onClick={isSubscribed ? handleUnsubscribe : handleSubscribe}
-                    className={`${isSubscribed ? "bg-red-500" : "bg-blue-500"}`}
-                  >
-                    {isSubscribed ? "Unsubscribe" : "Subscribe"}
-                  </Button>
-                  <Button
-                    onClick={handleLike}
-                    className={`bg-gray-200 px-2 ${
-                      hasLiked ? "text-green-700" : ""
-                    }`}
-                  >
-                    {likes}
-                    {hasLiked ? (
-                      <AiFillLike className="ml-1" />
-                    ) : (
-                      <AiOutlineLike className="ml-1" />
-                    )}
-                  </Button>
-                  <Button
-                    onClick={handleDislike}
-                    className={`bg-gray-200 px-2 ${
-                      hasDisliked ? "text-red-500" : ""
-                    }`}
-                  >
-                    {dislikes}
-                    {hasDisliked ? (
-                      <AiFillDislike className="ml-1" />
-                    ) : (
-                      <AiOutlineDislike className="ml-1" />
-                    )}
-                  </Button>
-                </div>}
+
+                {viewerUsername !== username && (
+                  <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                    <Button
+                      onClick={
+                        isSubscribed ? handleUnsubscribe : handleSubscribe
+                      }
+                      className={`${
+                        isSubscribed ? "bg-red-500" : "bg-blue-500"
+                      }`}
+                    >
+                      {isSubscribed ? "Unsubscribe" : "Subscribe"}
+                    </Button>
+                    <Button
+                      onClick={handleLike}
+                      className={`bg-gray-200 px-2 ${
+                        hasLiked ? "text-green-700" : ""
+                      }`}
+                    >
+                      {likes}
+                      {hasLiked ? (
+                        <AiFillLike className="ml-1" />
+                      ) : (
+                        <AiOutlineLike className="ml-1" />
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleDislike}
+                      className={`bg-gray-200 px-2 ${
+                        hasDisliked ? "text-red-500" : ""
+                      }`}
+                    >
+                      {dislikes}
+                      {hasDisliked ? (
+                        <AiFillDislike className="ml-1" />
+                      ) : (
+                        <AiOutlineDislike className="ml-1" />
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
               <span className="text-sm sm:text-lg text-gray-500 mt-2">
                 Started {timeElapsed}
               </span>
             </div>
           ) : (
-            <p className="text-white">Loading stream...</p>
+            <Image
+              loading="eager"
+              src="/houlSvg.svg"
+              className="rotate"
+              height={200}
+              width={200}
+              alt="Houl"
+            />
           )}
         </div>
-        {/* chat section */}
+
         <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative">
           <h2 className="text-xl font-bold text-white ml-2">Live Chat</h2>
-          {/* Chat messages container */}
           <div
-            className="flex-grow mt-4 space-y-4 overflow-y-auto pr-2"
+            className="flex-grow mt-4 space-y-4 overflow-y-auto "
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <style jsx>{`
@@ -439,25 +573,41 @@ const StreamPage = ({ params }) => {
                 display: none;
               }
             `}</style>
-            {/* Chat messages display */}
             {chatMessages.length > 0 ? (
               chatMessages.map((msg, index) => (
                 <div
                   key={index}
-                  className="flex justify-between space-x-2 pl-2 hover:bg-gray-900 pt-1 group"
+                  className={`flex justify-between space-x-2 pl-2 mx-2 rounded ${
+                    msg.messageType == "chirp"
+                      ? "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+                      : ""
+                  } hover:bg-gray-900 pt-1 group`}
                 >
-                  <div className="w-[80%] flex ">
+                  <div className={`w-[80%] flex  `}>
                     <CustomAvatar
                       className="inline"
                       src={msg.photoUrl}
                       alt={msg.chatAuthor}
                       fallbackSrc={"https://github.com/shadcn.png"}
                     />
-                    <div className="text-white ml-[5%]">
-                      <p>
-                        <strong>{msg.chatAuthor}</strong>: {msg.message}
-                      </p>
-                      <span className="text-xs text-gray-400">
+                    <div className="text-white ml-[5%] w-[70%]">
+                      <div className="flex items-center justify-between">
+                        <p>
+                          <strong>{msg.chatAuthor}</strong>: {msg.message}
+                        </p>
+                        <span className="font-light italic text-sm text-gray-600">
+                          {msg.messageType === "chirp"
+                            ? `x${msg?.chirpAmount}chirps`
+                            : "no chirp"}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs ${
+                          msg.messageType == "chirp"
+                            ? "text-gray-600"
+                            : "text-gray-400"
+                        }`}
+                      >
                         {formatTimestamp(msg.chatTimestamp)}
                       </span>
                     </div>
@@ -477,31 +627,185 @@ const StreamPage = ({ params }) => {
               <p className="text-gray-500 ml-2">No messages yet.</p>
             )}
           </div>
-          {/* Chat input field and send button */}
-          <div className="flex items-center w-full bg-purple-700 pl-1 py-1">
-            <CustomAvatar
-              className="inline"
-              src={user.photoURL}
-              alt={user.chatAuthor}
-              fallbackSrc={"https://github.com/shadcn.png"}
-            />
-            <input
-              type="text"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none w-[60%]"
-            />
-            <Button
-              // variant="houl"
-              onClick={handleSendMessage}
-              className="bg-purple-950 text-white  mr-1 p-4"
-            >
-              Houl
-            </Button>
+          <div className="w-full bg-purple-700 pl-1 py-1">
+            <div className="flex items-center w-full bg-purple-700 pl-1 py-1">
+              <CustomAvatar
+                className="inline"
+                src={user.photoURL}
+                alt={user.chatAuthor}
+                fallbackSrc={"https://github.com/shadcn.png"}
+              />
+              <input
+                type="text"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none w-[60%]"
+              />
+              <span
+                className=" flex items-center mx-1 cursor-pointer text-gray-300 font-light w-[3rem] italic justify-between"
+                onClick={() => {
+                  setIsChirpsModalOpen(true);
+                }}
+              >
+              
+                x{viewerCredits}
+                <Image src="/chirpsIcon.png" width={15} height={15} />
+              </span>
+              <Button
+                onClick={
+                  viewerCredits < 5 ? openBuyChirpsModal : handleSendMessage
+                }
+                className="bg-purple-950 text-white  mr-1 p-4"
+              >
+                {viewerCredits < 5 ? "Get Chirps" : "Houl"}
+              </Button>
+            </div>
+            {/* <div className="flex ml-2">
+              <span
+                className=" flex items-center mx-1 cursor-pointer "
+                onClick={() => {
+                  viewerCredits > 5
+                    ? setIsChirpsModalOpen(true)
+                    : setIsBuyChirpsModalOpen(true);
+                }}
+              >
+                x{viewerCredits}
+                <Image
+                  src="/chirpsIcon.png"
+                  width={15}
+                  height={15}
+                  className="mx-1"
+                />
+              </span>
+            </div> */}
           </div>
         </div>
       </div>
+
+      {/* Chirps Modal */}
+      <Dialog
+        open={isChirpsModalOpen}
+        onClose={() => setIsChirpsModalOpen(false)}
+        className="fixed inset-0 z-10 flex items-center justify-center  bg-black bg-opacity-75 "
+      >
+        <DialogPanel className="bg-gray-800 p-6 rounded shadow-lg text-white max-w-[35vw]">
+          <h3 className="text-xl mb-4 text-center">
+            Send Chirps to {username}
+          </h3>
+          <input
+            disabled={viewerCredits < 5 ? true : false}
+            type="range"
+            min={5}
+            max={viewerCredits}
+            value={chirpsAmount}
+            onChange={(e) => setChirpsAmount(Number(e.target.value))}
+            className="w-full bg-transparent"
+          />
+          {viewerCredits < 5 ? (
+            <p className="text-red-600 italic font-normal mb-4">
+              Minimum 5 chirps required.
+            </p>
+          ) : (
+            <p className="text-center mb-4">{chirpsAmount} Chirps</p>
+          )}
+
+          <input
+            placeholder="Message available at x30 chirps!"
+            value={chirpsMessage}
+            onChange={(e) => {
+              setChirpsMessage(e.target.value);
+              setMessageInput(e.target.value);
+            }}
+            disabled={chirpsAmount >= 30 ? false : true}
+            className="w-full p-2 rounded bg-gray-700 text-white"
+          />
+
+          <Button
+            className="w-full mt-4 bg-green-600"
+            onClick={handleSendChirps}
+          >
+            Send Chirps
+          </Button>
+          <Button
+            className="w-full mt-4 bg-purple-950 text-white"
+            onClick={() => {
+              setIsChirpsModalOpen(false);
+              setIsBuyChirpsModalOpen(true);
+            }}
+          >
+            Buy Chirps
+          </Button>
+        </DialogPanel>
+      </Dialog>
+
+      {/* Buy Chirps Modal */}
+      <Dialog
+        open={isBuyChirpsModalOpen}
+        onClose={() => setIsBuyChirpsModalOpen(false)}
+        className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-75"
+      >
+        <DialogPanel
+          className="bg-gray-700 p-8 rounded shadow-lg text-black w-[90%] max-w-md relative"
+          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+        >
+          <h3 className="text-2xl mb-4 text-center text-white">Buy Chirps</h3>
+          <div className="space-y-4">
+            <Button
+              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
+              onClick={() => handleBuyChirps(30)}
+            >
+              x30
+              <Image
+                src="/chirpsIcon.png"
+                height={15}
+                width={15}
+                className="mx-1"
+              />{" "}
+              Chirps for 30 INR
+            </Button>
+            <Button
+              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
+              onClick={() => handleBuyChirps(80)}
+            >
+              x80
+              <Image
+                src="/chirpsIcon.png"
+                height={15}
+                width={15}
+                className="mx-1"
+              />{" "}
+              Chirps for 80 INR
+            </Button>{" "}
+            <Button
+              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
+              onClick={() => handleBuyChirps(120)}
+            >
+              x120
+              <Image
+                src="/chirpsIcon.png"
+                height={15}
+                width={15}
+                className="mx-1"
+              />{" "}
+              Chirps for 110 INR
+            </Button>{" "}
+            <Button
+              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
+              onClick={() => handleBuyChirps(180)}
+            >
+              x180
+              <Image
+                src="/chirpsIcon.png"
+                height={15}
+                width={15}
+                className="mx-1"
+              />{" "}
+              Chirps for 150 INR
+            </Button>
+          </div>
+        </DialogPanel>
+      </Dialog>
     </>
   );
 };
