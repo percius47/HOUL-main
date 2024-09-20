@@ -599,8 +599,6 @@ const StreamPage = ({ params }) => {
 
   return (
     <>
-      {" "}
-      {/* <Script scr="https://checkout.razorpay.com/v1/checkout.js" /> */}
       <TopBar username={user.email} userId={user.uid} />
       <Toaster
         toastOptions={{
@@ -753,8 +751,7 @@ const StreamPage = ({ params }) => {
                         </p>
                         <span className="font-light italic text-sm text-gray-600">
                           {msg.messageType === "chirp"
-                            ? `x${msg?.chirpAmount}chirps`
-                            : "no chirp"}
+                            && `x${msg?.chirpAmount}chirps`}
                         </span>
                       </div>
                       <span
