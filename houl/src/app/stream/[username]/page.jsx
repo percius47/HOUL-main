@@ -30,6 +30,7 @@ import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast"; // Import toast for notifications
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { CoinsIcon } from "lucide-react"; // Chirps Icon
+import Script from "next/script";
 
 const StreamPage = ({ params }) => {
   const { username } = params;
@@ -403,33 +404,186 @@ const StreamPage = ({ params }) => {
   const openBuyChirpsModal = () => {
     setIsBuyChirpsModalOpen(true);
   };
-  const handleBuyChirps = async (chirps) => {
-    const viewerDocRef = doc(db, "users", user.uid);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  };
+  const handleBuyChirps1 = async (chirps, amount) => {
+    const razorpayLoaded = await loadRazorpayScript(); // if (!razorpayLoaded) {
+    if (!razorpayLoaded) {
+      toast.error("Failed to load Razorpay SDK. Please try again.", {
+        position: "bottom-center",
+      });
+      return;
+    }
 
     try {
-      // Add the purchased chirps to the user's current credits
-      await updateDoc(viewerDocRef, {
-        credits: viewerCredits + chirps,
+      // Create Razorpay order
+      console.log("amount in page",amount);
+      
+      const response = await fetch("/api/razorpay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // This tells the server to expect JSON
+        },
+        body: JSON.stringify({ amount }),
       });
 
-      // Update local state with new credits
-      setViewerCredits(viewerCredits + chirps);
+      const data = await response.json();
 
-      // Close the Buy Chirps modal
-      setIsBuyChirpsModalOpen(false);
+      // if (!data.orderId) {
+      //   toast.error("Failed to create Razorpay order. Please try again.", {
+      //     position: "bottom-center",
+      //   });
+      //   return;
+      // }
 
-      // Show a success toast
-      toast.success(`You successfully bought ${chirps} chirps!`, {
-        position: "bottom-center",
-      });
+      const options = {
+        key: process.env.RAZORPAY_KEY_ID, // Replace with your Razorpay Key ID
+        amount: 100 * 100, // Amount in paisa
+        currency: "INR",
+        name: "Chirps Purchase",
+        description: `Purchase ${chirps} Chirps`,
+        order_id: data.orderId,
+        handler: async function (response) {
+          // Payment successful, now update the user's chirps
+          console.log("Payment successful!");
+
+          // try {
+          //   const viewerDocRef = doc(db, "users", user.uid);
+
+          //   // Add the purchased chirps to the user's current credits
+          //   await updateDoc(viewerDocRef, {
+          //     credits: viewerCredits + chirps,
+          //   });
+
+          //   // Update local state with new credits
+          //   setViewerCredits(viewerCredits + chirps);
+
+          //   // Close the Buy Chirps modal
+          //   setIsBuyChirpsModalOpen(false);
+
+          //   // Show a success toast
+          //   toast.success(`You successfully bought ${chirps} chirps!`, {
+          //     position: "bottom-center",
+          //   });
+          // } catch (error) {
+          //   console.error("Error adding chirps:", error);
+          //   toast.error(
+          //     "Failed to update chirps after payment. Please contact support.",
+          //     {
+          //       position: "bottom-center",
+          //     }
+          //   );
+          // }
+        },
+        prefill: {
+          name: user.displayName,
+          email: user.email,
+        },
+        theme: {
+          color: "#f59e0b",
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
     } catch (error) {
-      console.error("Error buying chirps:", error);
-      toast.error("Failed to buy chirps. Please try again.", {
-        position: "bottom-center",
-      });
+      console.error("Payment Failed", error);
     }
   };
+  const handleBuyChirps = async (chirps, amount) => {
+    const razorpayLoaded = await loadRazorpayScript();
 
+    if (!razorpayLoaded) {
+      toast.error("Failed to load Razorpay SDK. Please try again.", {
+        position: "bottom-center",
+      });
+      return;
+    }
+    try {
+      // Create Razorpay order
+      const response = await fetch("/api/razorpay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ amount }),
+      });
+
+      const data = await response.json();
+
+      if (!data.orderId) {
+        toast.error("Failed to create Razorpay order. Please try again.", {
+          position: "bottom-center",
+        });
+        return;
+      }
+
+      const options = {
+        key: process.env.RAZORPAY_KEY_ID, // Replace with your Razorpay Key ID
+        amount: amount * 100, // Amount in paisa
+        currency: "INR",
+        name: "Chirps Purchase",
+        description: `Purchase ${chirps} Chirps`,
+        order_id: data.orderId,
+        handler: async function (response) {
+          console.log("Payment Successful");
+          
+          // Payment successful, now update the user's chirps
+          try {
+            const viewerDocRef = doc(db, "users", user.uid);
+
+            // Add the purchased chirps to the user's current credits
+            await updateDoc(viewerDocRef, {
+              credits: viewerCredits + chirps,
+            });
+
+            // Update local state with new credits
+            setViewerCredits(viewerCredits + chirps);
+
+            // Close the Buy Chirps modal
+            setIsBuyChirpsModalOpen(false);
+
+            // Show a success toast
+            toast.success(`You successfully bought ${chirps} chirps!`, {
+              position: "bottom-center",
+            });
+          } catch (error) {
+            console.error("Error adding chirps:", error);
+            toast.error(
+              "Failed to update chirps after payment. Please contact support.",
+              {
+                position: "bottom-center",
+              }
+            );
+          }
+        },
+        prefill: {
+          name: user.displayName,
+          email: user.email,
+        },
+        theme: {
+          color: "#f59e0b",
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (error) {
+      console.error("Payment Failed", error);
+    }
+  };
   if (!user) {
     return (
       <Image
@@ -445,6 +599,8 @@ const StreamPage = ({ params }) => {
 
   return (
     <>
+      {" "}
+      {/* <Script scr="https://checkout.razorpay.com/v1/checkout.js" /> */}
       <TopBar username={user.email} userId={user.uid} />
       <Toaster
         toastOptions={{
@@ -648,7 +804,6 @@ const StreamPage = ({ params }) => {
                   setIsChirpsModalOpen(true);
                 }}
               >
-              
                 x{viewerCredits}
                 <Image src="/chirpsIcon.png" width={15} height={15} />
               </span>
@@ -682,7 +837,6 @@ const StreamPage = ({ params }) => {
           </div>
         </div>
       </div>
-
       {/* Chirps Modal */}
       <Dialog
         open={isChirpsModalOpen}
@@ -738,7 +892,6 @@ const StreamPage = ({ params }) => {
           </Button>
         </DialogPanel>
       </Dialog>
-
       {/* Buy Chirps Modal */}
       <Dialog
         open={isBuyChirpsModalOpen}
@@ -753,7 +906,7 @@ const StreamPage = ({ params }) => {
           <div className="space-y-4">
             <Button
               className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(30)}
+              onClick={() => handleBuyChirps(30, 30)}
             >
               x30
               <Image
@@ -766,7 +919,7 @@ const StreamPage = ({ params }) => {
             </Button>
             <Button
               className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(80)}
+              onClick={() => handleBuyChirps(80, 80)}
             >
               x80
               <Image
@@ -779,7 +932,7 @@ const StreamPage = ({ params }) => {
             </Button>{" "}
             <Button
               className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(120)}
+              onClick={() => handleBuyChirps(120, 110)}
             >
               x120
               <Image
@@ -792,7 +945,7 @@ const StreamPage = ({ params }) => {
             </Button>{" "}
             <Button
               className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(180)}
+              onClick={() => handleBuyChirps(180, 150)}
             >
               x180
               <Image
