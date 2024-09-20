@@ -106,24 +106,27 @@ const Login = ({ onLogin }) => {
           type="submit"
           className="w-full bg-purple-800 text-white text-lg"
         >
-          {isSignUp ? "Sign Up" : "Login"}
+          {isSignUp ? "Sign Up" : "Sign In"}
         </Button>
       </form>
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
-      {/* <Button className="bg-blue-600 mt-4" onClick={handleGoogleLogin}>
-        {isSignUp ? "Sign Up with Google" : "Login with Google"}
-      </Button> */}
       <Button
+        className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
+        onClick={handleGoogleLogin}
+      ><Image src="/googleLogo.png" width={40} height={40}/>
+        {isSignUp ? "Sign Up with Google" : "Sign in with Google"}
+      </Button>
+      {/* <Button
         className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
         onClick={handleGuestLogin}
       >
         Login as Guest
-      </Button>
+      </Button> */}
       <p className="mt-4">
         {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-        <Button variant="link" onClick={() => setIsSignUp(!isSignUp)}>
-          {isSignUp ? "Login here" : "Sign up here"}
+        <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="text-purple-500">
+          {isSignUp ? "Sign in." : "Sign up here!"}
         </Button>
       </p>
     </div>
