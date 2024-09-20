@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PiSignOutBold } from "react-icons/pi";
 import GoLiveModal from "./GoLiveModal";
-import { IoClose } from "react-icons/io5";
-import { Menu } from "lucide-react"; // Import an icon for the drawer toggle
-import { Dialog, DialogPanel } from "@headlessui/react"; // Using Headless UI for the drawer
+import { Dialog, DialogPanel } from "@headlessui/react";
 import {
   doc,
   onSnapshot,
@@ -28,9 +27,11 @@ const TopBar = ({ userId }) => {
   const [showModal, setShowModal] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [username, setUsername] = useState("");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State for controlling drawer visibility
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false); // For profile modal
   const [credits, setCredits] = useState(100); // Initialize credits with default 100
-
+  const [profilePicture, setProfilePicture] = useState(
+    "https://github.com/shadcn.png"
+  ); // Default profile picture
   const router = useRouter();
 
   useEffect(() => {
@@ -38,15 +39,19 @@ const TopBar = ({ userId }) => {
 
     const userDocRef = doc(db, "users", userId);
 
-    // Fetch username, credits, and isStreaming status from Firestore
+    // Fetch username, credits, isStreaming status, and profile picture from Firestore
     const fetchUserData = async () => {
       try {
         const userSnapshot = await getDoc(userDocRef);
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
+
           setUsername(userData.username);
           setIsStreaming(userData.isStreaming);
-          setCredits(userData?.credits>-1?userData?.credits : -1); // Default to 100 if credits don't exist
+          setCredits(userData?.credits > -1 ? userData?.credits : -1);
+          setProfilePicture(
+            userData?.photoUrl || "https://github.com/shadcn.png"
+          ); // Get profile picture or default
         } else {
           console.log("No such document!");
         }
@@ -62,7 +67,8 @@ const TopBar = ({ userId }) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
         setIsStreaming(data.isStreaming);
-        setCredits(data?.credits>-1?data?.credits : -1); // Update credits in real-time
+        setCredits(data?.credits > -1 ? data?.credits : -1);
+        setProfilePicture(data?.photoUrl || "https://github.com/shadcn.png");
       }
     });
 
@@ -123,7 +129,7 @@ const TopBar = ({ userId }) => {
     <>
       {/* TopBar */}
       <header className="flex justify-between items-center p-4 bg-purple-950 text-white">
-        <div className="flex items-center ">
+        <div className="flex items-center">
           <Image
             loading="eager"
             src="/houlSvg.svg"
@@ -137,22 +143,8 @@ const TopBar = ({ userId }) => {
           />
         </div>
 
-        {/* Hamburger menu for small screens */}
-        <div className="sm:hidden">
-          <Button
-            onClick={() => setIsDrawerOpen(true)}
-            className="bg-houlPurple text-houlLight p-2 rounded"
-          >
-            <Menu className="text-white" />
-          </Button>
-        </div>
-
-        {/* Normal buttons for larger screens */}
-        <div className="hidden sm:flex items-center space-x-4">
-          <p>Welcome {username}!</p>
-
-          {/* Display credits */}
-          <div className="flex text-white w-[3rem] items-center justify-between">x{credits} <Image src="/chirpsIcon.png" height={20} width={20}/></div>
+        {/* Right Side - Profile Picture and Go Live/Stop Stream Button */}
+        <div className="flex items-center space-x-4">
           {isStreaming ? (
             <Button className="bg-red-600" onClick={handleStopStream}>
               Stop Stream
@@ -162,9 +154,19 @@ const TopBar = ({ userId }) => {
               Go Live
             </Button>
           )}
-          <Button className="bg-orange-600" onClick={handleSignOut}>
-            Sign Out
-          </Button>
+
+          {/* Profile Picture */}
+          {profilePicture && (
+            <Image
+              src={profilePicture || "https://github.com/shadcn.png"}
+              height={36}
+              width={36}
+              className="h-9 w-9 rounded-full cursor-pointer"
+              alt="Profile Picture"
+              onError={(e) => (e.target.src = "https://github.com/shadcn.png")}
+              onClick={() => setIsProfileModalOpen(true)} // Open profile modal on click
+            />
+          )}
         </div>
       </header>
 
@@ -178,51 +180,35 @@ const TopBar = ({ userId }) => {
         />
       )}
 
-      {/* Drawer for small screens */}
+      {/* Profile Info Modal */}
       <Dialog
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        className="relative z-50"
+        open={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        className="fixed inset-0 z-10 flex items-center justify-center "
       >
-        {/* Drawer backdrop */}
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-
-        {/* Drawer panel */}
-        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full max-w-xs p-4 overflow-y-auto bg-purple-950 text-gray">
-          <div className="flex justify-between items-center mb-4">
-            <Button
-              onClick={() => setIsDrawerOpen(false)}
-              className="bg-houlPurple text-houlLight text-xl p-2 rounded fixed right-0 mt-12 mr-4"
-            >
-              <IoClose />
-            </Button>
+        <DialogPanel className="bg-gray-800 p-6 absolute right-[4rem] top-[4rem] rounded-lg text-white w-[15%] max-w-md">
+          <div className="flex justify-center">
+            <Image
+              src={profilePicture || "https://github.com/shadcn.png"}
+              height={36}
+              width={36}
+              className="h-9 w-9 rounded-full"
+              alt="Profile"
+              onError={(e) => (e.target.src = "https://github.com/shadcn.png")}
+            />
           </div>
-          <p className="text-center text-lg mt-14">Welcome {username}</p>
-          <p className="text-center text-lg mt-2 flex items-center w-[20%] italic text-gray-200 mx-auto justify-between">x{credits}<Image src="/chirpsIcon.png" height={20} width={20}/></p>
-          <div className="mt-4 space-y-2">
-            {isStreaming ? (
-              <Button
-                className="bg-red-600 w-full"
-                onClick={() => {
-                  handleStopStream();
-                  setIsDrawerOpen(false);
-                }}
-              >
-                Stop Stream
-              </Button>
-            ) : (
-              <Button
-                className="bg-green-600 w-full"
-                onClick={() => {
-                  handleGoLive();
-                  setIsDrawerOpen(false);
-                }}
-              >
-                Go Live
-              </Button>
-            )}
+          <h4 className="text-center  mb-4"> {username}</h4>
+
+          {/* Credits */}
+          <div className="flex justify-center items-center text-lg mb-4">
+            <span className="mr-2"> {credits}</span>
+            <Image src="/chirpsIcon.png" height={20} width={20} />
+          </div>
+
+          {/* Buttons */}
+          <div className="space-y-2">
             <Button className="bg-orange-600 w-full" onClick={handleSignOut}>
-              Sign Out
+              Sign Out <PiSignOutBold className="ml-1" />
             </Button>
           </div>
         </DialogPanel>

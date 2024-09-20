@@ -14,6 +14,7 @@ import {
 import { db } from "../firebase/firebase";
 import ReactPlayer from "react-player";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const [serverUrlCopied, setServerUrlCopied] = useState(false);
@@ -25,6 +26,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const serverUrl = "rtmp://13.234.177.100:1935/houl1/live1";
   const streamKey = "live1";
 
+  const router = useRouter();
   useEffect(() => {
     if (isPreviewing) {
       const userDoc = doc(db, "users", userId);
@@ -64,7 +66,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
         streamUrl: streamUrl,
         streamStartedAt: Date.now(),
         likes: 0,
-        dislikes:0,
+        dislikes: 0,
         chat: [],
       });
 
@@ -74,6 +76,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
 
       setIsStreaming(true);
       setIsPreviewing(false);
+      router.push(`/stream/${username}`);
       onClose(); // Close the modal
     } catch (error) {
       console.error("Error starting stream:", error);

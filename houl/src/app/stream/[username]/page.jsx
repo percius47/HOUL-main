@@ -695,18 +695,17 @@ const StreamPage = ({ params }) => {
               <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
                 <div className="flex items-center">
                   <div className="relative">
-                    {" "}
                     <Image
-                      loader={() => creatorAvatar}
-                      src={creatorAvatar}
+                      src={creatorAvatar || "https://github.com/shadcn.png"}
                       height={10}
                       width={10}
+                      alt="Creator Avatar"
                       className="h-9 w-9 rounded-[50%]"
-                      onError={(e) =>
-                        (e.target.src = "https://github.com/shadcn.png")
-                      }
+                   
                     />
-                    <span className="bg-red-700 rounded-[0.125rem] px-[2px]  left-0 right-0 mx-auto w-[70%] text-center top-[28px] absolute text-[0.6rem]">LIVE</span>
+                    <span className="bg-red-700 rounded-[0.125rem] px-[2px]  left-0 right-0 mx-auto w-[70%] text-center top-[28px] absolute text-[0.6rem]">
+                      LIVE
+                    </span>
                   </div>
                   {/* <CustomAvatar
                     className="inline cursor-pointer"
