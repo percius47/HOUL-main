@@ -47,7 +47,7 @@ const StreamPage = ({ params }) => {
   const [hasLiked, setHasLiked] = useState(false);
   const [hasDisliked, setHasDisliked] = useState(false);
   const [authorId, setAuthorId] = useState(null);
-  const [creatorAvatar, setCreatorAvatar] = useState(null);
+  const [creatorAvatar, setCreatorAvatar] = useState("");
   const [streamTime, setStreamTime] = useState(null);
   const [timeElapsed, setTimeElapsed] = useState("");
   const [messageInput, setMessageInput] = useState(""); // New state for chat input
@@ -162,6 +162,7 @@ const StreamPage = ({ params }) => {
     if (!username || !user) return;
 
     const fetchUserData = async () => {
+      //fetching streamer data
       const authorUid = await fetchAuthorUid(username);
       setAuthorId(authorUid);
 
@@ -169,6 +170,8 @@ const StreamPage = ({ params }) => {
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        // console.log("streamer data", userData);
+
         setCreatorAvatar(userData.photoUrl);
         setFollowers(userData.followers?.length || 0); // Set followers count
         setIsFollowing(
@@ -691,14 +694,28 @@ const StreamPage = ({ params }) => {
               </h2>
               <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
                 <div className="flex items-center">
-                  <CustomAvatar
-                    className="inline"
+                  <div className="relative">
+                    {" "}
+                    <Image
+                      loader={() => creatorAvatar}
+                      src={creatorAvatar}
+                      height={10}
+                      width={10}
+                      className="h-9 w-9 rounded-[50%]"
+                      onError={(e) =>
+                        (e.target.src = "https://github.com/shadcn.png")
+                      }
+                    />
+                    <span className="bg-red-700 rounded-[0.125rem] px-[2px]  left-0 right-0 mx-auto w-[70%] text-center top-[28px] absolute text-[0.6rem]">LIVE</span>
+                  </div>
+                  {/* <CustomAvatar
+                    className="inline cursor-pointer"
                     src={creatorAvatar}
                     alt={"username"}
-                    fallbackSrc={"https://github.com/shadcn.png"}
-                  />
+                    fallbackSrc={"https://github.com/shadcn.png"} 
+                  /> */}
                   <div className="ml-3">
-                    <h2 className="text-lg sm:text-xl font-bold text-gray-400">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-400 cursor-pointer">
                       {username}
                     </h2>
                     <span className="text-sm sm:text-md text-gray-500">
@@ -839,7 +856,12 @@ const StreamPage = ({ params }) => {
                           {msg.messageType === "chirp" &&
                             `x${msg?.chirpAmount}`}
                           {msg.messageType === "chirp" && (
-                            <Image src="/chirpsIcon.png" height={8} width={8} className="ml-[1px]"/>
+                            <Image
+                              src="/chirpsIcon.png"
+                              height={8}
+                              width={8}
+                              className="ml-[1px]"
+                            />
                           )}
                         </span>
                       </div>

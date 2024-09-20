@@ -14,7 +14,7 @@ const CustomAvatar = ({ src, alt, fallbackSrc }) => {
     <Avatar className="h-9 w-9">
       <AvatarImage
         src={imgSrc}
-        alt={alt}x
+        alt={alt}
         className="bg-transparent "
         onError={handleImageError} // Handle image loading errors
       />
