@@ -727,8 +727,8 @@ const StreamPage = ({ params }) => {
                     {/* Follow button */}
                     <div
                       onClick={isFollowing ? handleUnfollow : handleFollow}
-                      className={`rounded flex bg-purple-700 items-center p-1 cursor-pointer ${
-                        isFollowing ? "bg-gray-500" : "bg-blue-500"
+                      className={`rounded flex  items-center p-1 cursor-pointer ${
+                        isFollowing ? "bg-gray-500" : "bg-purple-700"
                       }`}
                     >
                       {isFollowing ? <HeartCrack /> : <HeartFilledIcon />}
@@ -744,7 +744,7 @@ const StreamPage = ({ params }) => {
                         isSubscribed ? handleUnsubscribe : handleSubscribe
                       }
                     >
-                      <span className="pr-1 py-1">
+                      <span className="pr-2 py-1">
                         {isSubscribed ? "Subscribed" : "Subscribe"}
                       </span>
                       {!isSubscribed ? (

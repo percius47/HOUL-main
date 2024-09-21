@@ -66,13 +66,14 @@
   color: "#f0e7fd !important";
 }
 .react-player{
-   height: auto !important;
+   /* height: auto !important;
   width: auto !important;
- 
+  */
   margin-bottom: 1rem;
 }
 .react-player video{
   max-height: 68vh;
+  /* width: auto; */
 }
 .react-player > div {
   position: absolute; 
