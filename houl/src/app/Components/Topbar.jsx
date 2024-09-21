@@ -189,7 +189,7 @@ const TopBar = ({ userId }) => {
         onClose={() => setIsProfileModalOpen(false)}
         className="fixed inset-0 z-10 flex items-center justify-center "
       >
-        <DialogPanel className="bg-gray-800 p-6 absolute right-[4rem] top-[4rem] rounded-lg text-white w-[15%] max-w-md">
+        <DialogPanel className="bg-gray-800 p-6 absolute lg:right-[4rem] right-[1rem] top-[4rem] rounded-lg text-white lg:w-[20vw] md:w-[30vw] w-[40vw] max-w-md">
           <div className="flex justify-center">
             <Image
               src={profilePicture || "https://github.com/shadcn.png"}
