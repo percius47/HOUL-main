@@ -132,7 +132,7 @@ const TopBar = ({ userId }) => {
         <div className="flex items-center">
           <Image
             loading="eager"
-            src="/houlSvg.svg"
+            src="/houl_darker_svg.svg"
             height={50}
             width={50}
             alt="Houl"
@@ -141,6 +141,7 @@ const TopBar = ({ userId }) => {
               router.push(`/`);
             }}
           />
+          <p className="text-[2rem] ml-2">Houl</p>
         </div>
 
         {/* Right Side - Profile Picture and Go Live/Stop Stream Button */}
@@ -197,7 +198,7 @@ const TopBar = ({ userId }) => {
               onError={(e) => (e.target.src = "https://github.com/shadcn.png")}
             />
           </div>
-          <h4 className="text-center  mb-4"> {username}</h4>
+          <h4 className="text-center text-[0.95rem]  mb-4"> @{username}</h4>
 
           {/* Credits */}
           <div className="flex justify-center items-center text-lg mb-4">

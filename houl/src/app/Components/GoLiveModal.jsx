@@ -161,7 +161,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
             ) : (
               <Image
                 loading="eager"
-                src="/houlSvg.svg"
+                src="/houl_darker_svg.svg"
                 className="rotate"
                 height={200}
                 width={200}

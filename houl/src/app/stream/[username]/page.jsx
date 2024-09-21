@@ -639,7 +639,7 @@ const StreamPage = ({ params }) => {
     return (
       <Image
         loading="eager"
-        src="/houlSvg.svg"
+        src="/houl_darker_svg.svg"
         className="rotate"
         height={200}
         width={200}
@@ -701,7 +701,6 @@ const StreamPage = ({ params }) => {
                       width={10}
                       alt="Creator Avatar"
                       className="h-9 w-9 rounded-[50%]"
-                   
                     />
                     <span className="bg-red-700 rounded-[0.125rem] px-[2px]  left-0 right-0 mx-auto w-[70%] text-center top-[28px] absolute text-[0.6rem]">
                       LIVE
@@ -800,7 +799,7 @@ const StreamPage = ({ params }) => {
           ) : (
             <Image
               loading="eager"
-              src="/houlSvg.svg"
+              src="/houl_darker_svg.svg"
               className="rotate"
               height={200}
               width={200}

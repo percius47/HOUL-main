@@ -70,7 +70,7 @@ const StreamGrid = () => {
         <div className="flex justify-center items-center h-screen">
           <Image
             loading="eager"
-            src="/houlSvg.svg"
+            src="/houl_darker_svg.svg"
             className="rotate"
             height={200}
             width={200}
@@ -118,7 +118,7 @@ const StreamGrid = () => {
         <div className="absolute inset-0 flex flex-col justify-center items-center">
           <Image
             loading="eager"
-            src="/houlSvg.svg"
+            src="/houl_darker_svg.svg"
             height={200}
             width={200}
             alt="Houl"

@@ -76,7 +76,7 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <Image src="/houlSvg.svg" width={100} height={100} />
+      <Image src="/houl_darker_svg.svg" width={100} height={100} />
       <h1 className="my-3 text-7xl font-bold text-purple-700">H O U L</h1>
       {/* <h2 className="mb-4 text-2xl font-bold">
         {isSignUp ? "Sign Up" : "Login"}
@@ -114,7 +114,8 @@ const Login = ({ onLogin }) => {
       <Button
         className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
         onClick={handleGoogleLogin}
-      ><Image src="/googleLogo.png" width={40} height={40}/>
+      >
+        <Image src="/googleLogo.png" width={40} height={40} />
         {isSignUp ? "Sign Up with Google" : "Sign in with Google"}
       </Button>
       {/* <Button
@@ -125,7 +126,11 @@ const Login = ({ onLogin }) => {
       </Button> */}
       <p className="mt-4">
         {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-        <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="text-purple-500">
+        <Button
+          variant="link"
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="text-purple-500"
+        >
           {isSignUp ? "Sign in." : "Sign up here!"}
         </Button>
       </p>
