@@ -697,12 +697,12 @@ const StreamPage = ({ params }) => {
                   <div className="relative">
                     <Image
                       src={creatorAvatar || "https://github.com/shadcn.png"}
-                      height={10}
-                      width={10}
+                      height={50}
+                      width={50}
                       alt="Creator Avatar"
-                      className="h-9 w-9 rounded-[50%]"
+                      className="h-10 w-10 rounded-[50%]"
                     />
-                    <span className="bg-red-700 rounded-[0.125rem] px-[2px]  left-0 right-0 mx-auto w-[70%] text-center top-[28px] absolute text-[0.6rem]">
+                    <span className="bg-red-700 rounded-[0.125rem] px-[2px]  left-0 right-0 mx-auto w-[70%] text-center top-[30px] absolute text-[0.6rem]">
                       LIVE
                     </span>
                   </div>
