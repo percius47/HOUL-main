@@ -141,7 +141,9 @@ const TopBar = ({ userId }) => {
               router.push(`/`);
             }}
           />
-          <p className="text-[2rem] ml-2">Houl</p>
+          <p className="text-[2rem] ml-2 lexend-topbarLogo  hidden lg:block ">
+            Houl
+          </p>
         </div>
 
         {/* Right Side - Profile Picture and Go Live/Stop Stream Button */}

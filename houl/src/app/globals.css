@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 
 @layer base {
   :root {
@@ -87,7 +87,12 @@
 
   animation: rotation 2s infinite linear;
 }
-
+.lexend-topbarLogo {
+  font-family: "Lexend", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
 @keyframes rotation {
   from {
     transform: rotate(0deg);
