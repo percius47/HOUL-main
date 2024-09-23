@@ -727,8 +727,8 @@ const StreamPage = ({ params }) => {
                   },
                 }}
               />
-              <div className="flex justify-between">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white mt-2">
+              <div className="flex justify-between items-center mt-2 py-1">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white ">
                   {streamName}
                 </h2>
                 {/* Viewer count */}
