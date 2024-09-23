@@ -6,6 +6,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import ReactPlayer from "react-player";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { UserIcon } from "lucide-react";
 
 const StreamGrid = () => {
   const [streams, setStreams] = useState([]);
@@ -103,9 +104,21 @@ const StreamGrid = () => {
                   },
                 }}
               />
-              <h5 className="text-lg font-bold mb-2 text-white">
-                {stream.streamName}
-              </h5>
+              <div className="flex w-full justify-between">
+                {" "}
+                <h5 className="text-lg font-bold mb-2 text-white">
+                  {stream.streamName}
+                </h5>
+                {/* Viewer count */}
+                <span className="txt-[1rem] flex justify-between items-center sm:text-md text-red-500 ml-2">
+                  {stream.viewers.length}
+                  <UserIcon
+                    className="text-red-400 inline fill-red-500 mx-1"
+                    height={12}
+                    width={12}
+                  />
+                </span>
+              </div>
               <p className="text-sm text-gray-400">Author: {stream.author}</p>
               <p className="text-sm text-gray-400">
                 {timeElapsed[stream.id] || "Calculating..."}
