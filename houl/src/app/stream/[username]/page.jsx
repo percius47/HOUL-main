@@ -13,6 +13,7 @@ import {
   arrayUnion,
   arrayRemove,
   getDocs,
+  setDoc,
 } from "firebase/firestore";
 import ReactPlayer from "react-player";
 import { Button } from "@/components/ui/button";
@@ -29,9 +30,10 @@ import CustomAvatar from "@/app/Components/CustomAvatar";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast"; // Import toast for notifications
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
-import { CoinsIcon, HeartCrack } from "lucide-react"; // Chirps Icon
+import { CoinsIcon, HeartCrack, UserIcon, UserSquare2 } from "lucide-react"; // Chirps Icon
 import Script from "next/script";
 import { HeartFilledIcon } from "@radix-ui/react-icons";
+import { v4 as uuidv4 } from "uuid"; // For generating unique viewer IDs
 
 const StreamPage = ({ params }) => {
   const { username } = params;
@@ -58,6 +60,9 @@ const StreamPage = ({ params }) => {
   const [isBuyChirpsModalOpen, setIsBuyChirpsModalOpen] = useState(false); // Modal for buying chirps
   const [isFollowing, setIsFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
+  const [viewerCount, setViewerCount] = useState(0); // Live viewer count
+
+  const viewerId = uuidv4(); // Generate a unique ID for the viewer
 
   useEffect(() => {
     // Monitor user authentication status
@@ -108,6 +113,7 @@ const StreamPage = ({ params }) => {
         setHasLiked(streamData.likedBy?.includes(user?.uid));
         setHasDisliked(streamData.dislikedBy?.includes(user?.uid));
         setChatMessages(streamData.chat || []);
+        setViewerCount(streamData.viewerCount || 0); // Initialize viewer count
       }
     });
 
@@ -136,6 +142,121 @@ const StreamPage = ({ params }) => {
 
     return () => clearInterval(intervalId);
   }, [streamTime]);
+
+  // Track viewer joining
+  useEffect(() => {
+    const addViewer = async () => {
+      if (!user || !username) return;
+
+      try {
+        const streamsQuery = query(
+          collection(db, "streams"),
+          where("author", "==", username)
+        );
+        const streamSnapshot = await getDocs(streamsQuery);
+
+        if (!streamSnapshot.empty) {
+          const streamDoc = streamSnapshot.docs[0];
+          const streamData = streamDoc.data();
+          const streamDocRef = doc(db, "streams", streamDoc.id);
+
+          // Check if the viewer is already present
+          if (streamData.viewers && streamData.viewers.includes(user.uid)) {
+            console.log("Viewer is already present.");
+            return; // Viewer already added, exit function
+          }
+
+          // If viewer is not present, add to viewers array
+          await updateDoc(streamDocRef, {
+            viewers: arrayUnion(user.uid),
+          });
+
+          console.log("Viewer added successfully.");
+        } else {
+          console.log("No active stream found for the author.");
+        }
+      } catch (error) {
+        console.error("Error adding viewer:", error);
+      }
+    };
+
+    const removeViewer = async () => {
+      if (!user || !username) return;
+
+      try {
+        const streamsQuery = query(
+          collection(db, "streams"),
+          where("author", "==", username)
+        );
+        const streamSnapshot = await getDocs(streamsQuery);
+
+        if (!streamSnapshot.empty) {
+          const streamDoc = streamSnapshot.docs[0];
+          const streamData = streamDoc.data();
+          const streamDocRef = doc(db, "streams", streamDoc.id);
+
+          // Check if the viewer exists before attempting to remove
+          if (streamData.viewers && streamData.viewers.includes(user.uid)) {
+            await updateDoc(streamDocRef, {
+              viewers: arrayRemove(user.uid),
+            });
+            console.log("Viewer removed successfully.");
+          } else {
+            console.log("Viewer not found, cannot remove.");
+          }
+        } else {
+          console.log("No active stream found for the author.");
+        }
+      } catch (error) {
+        console.error("Error removing viewer:", error);
+      }
+    };
+
+    addViewer();
+
+    window.addEventListener("beforeunload", removeViewer); // Remove viewer on page close
+
+    return () => {
+      removeViewer();
+      window.removeEventListener("beforeunload", removeViewer);
+    };
+  }, [username, user]);
+
+  // Update viewer count every 5 seconds
+  useEffect(() => {
+    const updateViewerCount = async () => {
+      try {
+        const streamsQuery = query(
+          collection(db, "streams"),
+          where("author", "==", username)
+        );
+        const streamSnapshot = await getDocs(streamsQuery);
+
+        if (!streamSnapshot.empty) {
+          const streamDoc = streamSnapshot.docs[0]; // Get the first stream document
+          const streamData = streamDoc.data();
+          const streamDocRef = doc(db, "streams", streamDoc.id); // Reference to the stream document
+
+          const currentViewers = streamData.viewers || [];
+
+          // Update the viewerCount field based on the number of unique viewers
+          await updateDoc(streamDocRef, {
+            viewerCount: currentViewers.length,
+          });
+
+          setViewerCount(currentViewers.length); // Update local viewer count
+        } else {
+          console.log("No active stream found for the author.");
+        }
+      } catch (error) {
+        console.error("Error updating viewer count: ", error);
+      }
+    };
+
+    const intervalId = setInterval(updateViewerCount, 5000); // Update viewer count every 5 seconds
+
+    return () => clearInterval(intervalId);
+  }, [username]);
 
   const fetchAuthorUid = async () => {
     try {
@@ -170,7 +291,6 @@ const StreamPage = ({ params }) => {
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        // console.log("streamer data", userData);
 
         setCreatorAvatar(userData.photoUrl);
         setFollowers(userData.followers?.length || 0); // Set followers count
@@ -191,7 +311,7 @@ const StreamPage = ({ params }) => {
     fetchUserData();
   }, [username, user]);
 
-  //follow/unfollow logic
+  // Follow/unfollow logic
   const handleFollow = async () => {
     const userDocRef = doc(db, "users", authorId);
 
@@ -285,6 +405,7 @@ const StreamPage = ({ params }) => {
     );
 
     const streamSnapshot = await getDocs(streamsQuery);
+
     if (!streamSnapshot.empty) {
       const streamDocRef = streamSnapshot.docs[0].ref;
       const updateAction = hasLiked
@@ -388,6 +509,7 @@ const StreamPage = ({ params }) => {
     );
 
     const streamSnapshot = await getDocs(streamsQuery);
+    console.log("streamSnapp", streamSnapshot);
 
     if (!streamSnapshot.empty) {
       const streamDocRef = streamSnapshot.docs[0].ref;
@@ -468,90 +590,6 @@ const StreamPage = ({ params }) => {
       };
       document.body.appendChild(script);
     });
-  };
-  const handleBuyChirps1 = async (chirps, amount) => {
-    const razorpayLoaded = await loadRazorpayScript(); // if (!razorpayLoaded) {
-    if (!razorpayLoaded) {
-      toast.error("Failed to load Razorpay SDK. Please try again.", {
-        position: "bottom-center",
-      });
-      return;
-    }
-
-    try {
-      // Create Razorpay order
-      console.log("amount in page", amount);
-
-      const response = await fetch("/api/razorpay", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", // This tells the server to expect JSON
-        },
-        body: JSON.stringify({ amount }),
-      });
-
-      const data = await response.json();
-
-      // if (!data.orderId) {
-      //   toast.error("Failed to create Razorpay order. Please try again.", {
-      //     position: "bottom-center",
-      //   });
-      //   return;
-      // }
-
-      const options = {
-        key: process.env.RAZORPAY_KEY_ID, // Replace with your Razorpay Key ID
-        amount: 100 * 100, // Amount in paisa
-        currency: "INR",
-        name: "Chirps Purchase",
-        description: `Purchase ${chirps} Chirps`,
-        order_id: data.orderId,
-        handler: async function (response) {
-          // Payment successful, now update the user's chirps
-          console.log("Payment successful!");
-
-          // try {
-          //   const viewerDocRef = doc(db, "users", user.uid);
-
-          //   // Add the purchased chirps to the user's current credits
-          //   await updateDoc(viewerDocRef, {
-          //     credits: viewerCredits + chirps,
-          //   });
-
-          //   // Update local state with new credits
-          //   setViewerCredits(viewerCredits + chirps);
-
-          //   // Close the Buy Chirps modal
-          //   setIsBuyChirpsModalOpen(false);
-
-          //   // Show a success toast
-          //   toast.success(`You successfully bought ${chirps} chirps!`, {
-          //     position: "bottom-center",
-          //   });
-          // } catch (error) {
-          //   console.error("Error adding chirps:", error);
-          //   toast.error(
-          //     "Failed to update chirps after payment. Please contact support.",
-          //     {
-          //       position: "bottom-center",
-          //     }
-          //   );
-          // }
-        },
-        prefill: {
-          name: user.displayName,
-          email: user.email,
-        },
-        theme: {
-          color: "#f59e0b",
-        },
-      };
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
-    } catch (error) {
-      console.error("Payment Failed", error);
-    }
   };
   const handleBuyChirps = async (chirps, amount) => {
     const razorpayLoaded = await loadRazorpayScript();
@@ -689,9 +727,21 @@ const StreamPage = ({ params }) => {
                   },
                 }}
               />
-              <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white mt-2">
-                {streamName}
-              </h2>
+              <div className="flex justify-between">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white mt-2">
+                  {streamName}
+                </h2>
+                {/* Viewer count */}
+                <span className="text-xl flex  items-center sm:text-md text-red-500 ml-2">
+                  {viewerCount}
+                  <UserIcon
+                    className="text-red-400 inline fill-red-500 mx-1"
+                    height={20}
+                    width={20}
+                  />
+                </span>
+              </div>
+
               <div className="flex flex-col sm:flex-row justify-between w-full mt-2">
                 <div className="flex items-center">
                   <div className="relative">
@@ -706,12 +756,6 @@ const StreamPage = ({ params }) => {
                       LIVE
                     </span>
                   </div>
-                  {/* <CustomAvatar
-                    className="inline cursor-pointer"
-                    src={creatorAvatar}
-                    alt={"username"}
-                    fallbackSrc={"https://github.com/shadcn.png"} 
-                  /> */}
                   <div className="ml-3">
                     <h2 className="text-lg sm:text-xl font-bold text-gray-400 cursor-pointer">
                       {username}
@@ -724,7 +768,6 @@ const StreamPage = ({ params }) => {
 
                 {viewerUsername !== username && (
                   <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-                    {/* Follow button */}
                     <div
                       onClick={isFollowing ? handleUnfollow : handleFollow}
                       className={`rounded flex  items-center p-1 cursor-pointer ${
@@ -737,8 +780,8 @@ const StreamPage = ({ params }) => {
                       </span>
                     </div>
                     <div
-                      className={`flex rounded pl-2  items-center text-white cursor-pointer ${
-                        isSubscribed ? "bg-green-600" : "bg-purple-500 "
+                      className={`flex rounded pl-2 pr-1  items-center text-white cursor-pointer ${
+                        isSubscribed ? "bg-green-600" : "bg-purple-600 "
                       }`}
                       onClick={
                         isSubscribed ? handleUnsubscribe : handleSubscribe
@@ -762,33 +805,7 @@ const StreamPage = ({ params }) => {
                           1 month
                         </span>
                       )}
-                    </div>{" "}
-                    {/* <Button
-                      onClick={handleLike}
-                      className={`bg-gray-200 px-2 ${
-                        hasLiked ? "text-green-700" : ""
-                      }`}
-                    >
-                      {likes}
-                      {hasLiked ? (
-                        <AiFillLike className="ml-1" />
-                      ) : (
-                        <AiOutlineLike className="ml-1" />
-                      )}
-                    </Button> */}
-                    {/* <Button
-                      onClick={handleDislike}
-                      className={`bg-gray-200 px-2 ${
-                        hasDisliked ? "text-red-500" : ""
-                      }`}
-                    >
-                      {dislikes}
-                      {hasDisliked ? (
-                        <AiFillDislike className="ml-1" />
-                      ) : (
-                        <AiOutlineDislike className="ml-1" />
-                      )}
-                    </Button> */}
+                    </div>
                   </div>
                 )}
               </div>
@@ -830,12 +847,6 @@ const StreamPage = ({ params }) => {
                   } hover:bg-gray-900 pt-1 group`}
                 >
                   <div className={`w-full flex  items-center`}>
-                    {/* <CustomAvatar
-                      className="inline"
-                      src={msg.photoUrl}
-                      alt={msg.chatAuthor}
-                      fallbackSrc={"https://github.com/shadcn.png"}
-                    /> */}{" "}
                     <span
                       className={`text-[0.75rem] ${
                         msg.messageType == "chirp"
@@ -882,12 +893,6 @@ const StreamPage = ({ params }) => {
           </div>
           <div className="w-full bg-purple-700 pl-1 py-1">
             <div className="flex items-center w-full bg-purple-700 pl-1 py-1">
-              {/* <CustomAvatar
-                className="inline"
-                src={user.photoUrl}
-                alt={user.chatAuthor}
-                fallbackSrc={"https://github.com/shadcn.png"}
-              /> */}
               <input
                 type="text"
                 value={messageInput}
@@ -913,34 +918,12 @@ const StreamPage = ({ params }) => {
                 />
               </div>
               <Button
-                onClick={
-                  // viewerCredits < 5 ? openBuyChirpsModal :
-                  handleSendMessage
-                }
+                onClick={handleSendMessage}
                 className="bg-purple-950 text-white  mr-1 p-4"
               >
-                {/* {viewerCredits < 5 ? "Get Chirps" : "Houl"} */}
                 Houl
               </Button>
             </div>
-            {/* <div className="flex ml-2">
-              <span
-                className=" flex items-center mx-1 cursor-pointer "
-                onClick={() => {
-                  viewerCredits > 5
-                    ? setIsChirpsModalOpen(true)
-                    : setIsBuyChirpsModalOpen(true);
-                }}
-              >
-                x{viewerCredits}
-                <Image
-                  src="/chirpsIcon.png"
-                  width={15}
-                  height={15}
-                  className="mx-1"
-                />
-              </span>
-            </div> */}
           </div>
         </div>
       </div>

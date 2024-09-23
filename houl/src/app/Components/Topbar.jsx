@@ -22,6 +22,7 @@ import {
 import { auth, db } from "../firebase/firebase";
 import { signOut } from "firebase/auth";
 import Image from "next/image";
+import { MdEdit } from "react-icons/md";
 
 const TopBar = ({ userId }) => {
   const [showModal, setShowModal] = useState(false);
@@ -129,7 +130,7 @@ const TopBar = ({ userId }) => {
     <>
       {/* TopBar */}
       <header className="flex justify-between items-center p-4 bg-purple-950 text-white">
-        <div className="flex items-center">
+        <div className="flex items-center cursor-pointer">
           <Image
             loading="eager"
             src="/houl_darker_svg.svg"
@@ -200,7 +201,7 @@ const TopBar = ({ userId }) => {
               onError={(e) => (e.target.src = "https://github.com/shadcn.png")}
             />
           </div>
-          <h4 className="text-center text-[0.95rem]  mb-4"> @{username}</h4>
+          <div className="text-center text-[0.95rem]  mb-4"> @{username}<MdEdit className="inline text-purple-700 cursor-pointer"/></div>
 
           {/* Credits */}
           <div className="flex justify-center items-center text-lg mb-4">
