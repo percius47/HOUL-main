@@ -78,7 +78,12 @@ const StreamPage = ({ params }) => {
 
     return () => unsubscribeAuth();
   }, []);
-
+  //sets range to 0 on buy chirps modal
+  useEffect(() => {
+    if (isChirpsModalOpen) {
+      setChirpsAmount(viewerCredits); // Reset chirps amount to 0 when the modal is opened
+    }
+  }, [isChirpsModalOpen]);
   const fetchViewerData = async (uid) => {
     try {
       const userDocRef = doc(db, "users", uid);
@@ -712,6 +717,8 @@ const StreamPage = ({ params }) => {
                 url={streamUrl}
                 playing={true}
                 controls
+                muted
+                playsinline={true}
                 className="react-player"
                 width="100%"
                 height="auto"
@@ -720,6 +727,7 @@ const StreamPage = ({ params }) => {
                   file: {
                     attributes: {
                       autoPlay: true,
+                      playsInline: true,
                     },
                     hlsOptions: {
                       startPosition: -1,
@@ -798,6 +806,7 @@ const StreamPage = ({ params }) => {
                             width={15}
                             height={15}
                             className="ml-1"
+                            alt="Chirps"
                           />
                         </span>
                       ) : (
@@ -870,6 +879,7 @@ const StreamPage = ({ params }) => {
                               height={8}
                               width={8}
                               className="ml-[1px]"
+                              alt="Chirps"
                             />
                           )}
                         </span>
@@ -915,6 +925,7 @@ const StreamPage = ({ params }) => {
                   width={15}
                   height={15}
                   className="mx-1 mr-2 "
+                  alt="Chirps"
                 />
               </div>
               <Button
@@ -927,25 +938,28 @@ const StreamPage = ({ params }) => {
           </div>
         </div>
       </div>
-      {/* Chirps Modal */}
+      {/* Send Chirps Modal */}
       <Dialog
         open={isChirpsModalOpen}
         onClose={() => setIsChirpsModalOpen(false)}
-        className="fixed inset-0 z-10 flex items-center justify-center  bg-black bg-opacity-75 "
+        className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-75 "
       >
-        <DialogPanel className="bg-gray-800 p-6 rounded shadow-lg text-white max-w-[35vw]">
+        <DialogPanel className="bg-gray-800 p-6 rounded shadow-lg text-white sm:w-[45vw] w-[75vw] flex flex-col">
           <h3 className="text-xl mb-4 text-center">
             Send Chirps to {username}
           </h3>
+
           <input
             disabled={viewerCredits < 5 ? true : false}
+            id="range3"
             type="range"
             min={5}
             max={viewerCredits}
-            value={chirpsAmount}
+            value={chirpsAmount} // Ensure value is controlled by state
             onChange={(e) => setChirpsAmount(Number(e.target.value))}
-            className="w-full bg-transparent"
+            className="w-[90%] bg-transparent my-1 mx-auto"
           />
+
           {viewerCredits < 5 ? (
             <p className="text-red-600 italic font-normal mb-4">
               Minimum 5 chirps required.
@@ -982,6 +996,7 @@ const StreamPage = ({ params }) => {
           </Button>
         </DialogPanel>
       </Dialog>
+
       {/* Buy Chirps Modal */}
       <Dialog
         open={isBuyChirpsModalOpen}
@@ -1004,6 +1019,7 @@ const StreamPage = ({ params }) => {
                 height={15}
                 width={15}
                 className="mx-1"
+                alt="Chirps"
               />{" "}
               Chirps for 30 INR
             </Button>
@@ -1017,6 +1033,7 @@ const StreamPage = ({ params }) => {
                 height={15}
                 width={15}
                 className="mx-1"
+                alt="Chirps"
               />{" "}
               Chirps for 80 INR
             </Button>{" "}
@@ -1030,6 +1047,7 @@ const StreamPage = ({ params }) => {
                 height={15}
                 width={15}
                 className="mx-1"
+                alt="Chirps"
               />{" "}
               Chirps for 110 INR
             </Button>{" "}
@@ -1043,6 +1061,7 @@ const StreamPage = ({ params }) => {
                 height={15}
                 width={15}
                 className="mx-1"
+                alt="Chirps"
               />{" "}
               Chirps for 150 INR
             </Button>

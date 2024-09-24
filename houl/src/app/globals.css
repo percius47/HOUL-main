@@ -93,6 +93,70 @@
   font-weight: 500;
   font-style: normal;
 }
+
+/* range 3 */
+#range3 {
+  -webkit-appearance: none;
+  appearance: none; 
+  cursor: pointer;
+  outline: none;
+  border-radius: 15px;
+  height: 20px;
+  height: 6px;
+  background: #fca626;
+}
+
+#range3::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none; 
+  height: 30px;
+  width: 30px;
+  background: transparent;
+  background-image: url("/chirpsIcon.png");
+  background-size: cover;
+  border-radius: 50%;
+  transition: .2s ease-in-out;
+  transform: rotateZ(var(--thumb-rotate, 0deg));
+}
+
+/* Thumb: Firefox */
+#range3::-moz-range-thumb {
+  height: 30px;
+  width: 30px;
+  background: transparent;
+  background-image: url("https://ibaslogic.github.io/hosted-assets/smile.png");
+  background-size: cover;
+  border: none;
+  border-radius: 50%;
+  transform: rotateZ(var(--thumb-rotate, 0deg));
+  transition: .2s ease-in-out;
+}
+
+#range3::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 8px rgba(255, 200, 0, 0.2)
+}
+#range3:active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 13px rgba(255,85,0, .2)
+}
+
+#range3:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 13px rgba(255,85,0, .2)
+}
+
+#range3::-moz-range-thumb:hover {
+  box-shadow: 0 0 0 10px rgba(255,85,0, .1)
+}
+#range3:active::-moz-range-thumb {
+  box-shadow: 0 0 0 13px rgba(255,85,0, .2)
+}
+#range3:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 13px rgba(255,85,0, .2)    
+}
+
+/* range 3 */
+.range-slider {
+  flex: 1;
+}
 @keyframes rotation {
   from {
     transform: rotate(0deg);

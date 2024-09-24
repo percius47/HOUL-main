@@ -165,6 +165,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                 className="rotate"
                 height={200}
                 width={200}
+                priority={true}
                 alt="Houl"
               />
             )}

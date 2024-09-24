@@ -25,7 +25,7 @@ export default function Home() {
         username: user.email.match(/^([^@]+)/)[0],
         isStreaming: false,
         subscribers: 0,
-        photoUrl: user?.photoUrl,
+        photoUrl: user?.photoUrl||null,
         credits:100,
         serverURL: "rtmp://13.234.177.100:1935/houl1/live1", //default channel
         streamKey: "live1", //default key

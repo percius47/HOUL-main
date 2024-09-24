@@ -88,8 +88,9 @@ const StreamGrid = () => {
               onClick={() => handleStreamClick(stream.author)}
             >
               <ReactPlayer
-                playsinline
-                controls
+                playsinline={true}
+               
+                muted={true}
                 url={stream.streamUrl}
                 playing={true} // Auto-play the video
                 className="react-player"

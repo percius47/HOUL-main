@@ -255,7 +255,7 @@ const TopBar = ({ userId }) => {
         onClose={() => setIsProfileModalOpen(false)}
         className="fixed inset-0 z-10 flex items-center justify-center"
       >
-        <DialogPanel className="bg-gray-800 flex flex-col gap-1 items-center p-6 absolute lg:right-[4rem] right-[1rem] top-[4rem] rounded-lg text-white lg:w-[20vw] md:w-[30vw] w-[40vw] max-w-md">
+        <DialogPanel className="bg-gray-800 flex flex-col gap-1 items-center p-6 absolute lg:right-[4rem] right-[1rem] top-[4rem] rounded-lg text-white lg:w-[20vw] md:w-[30vw] w-[50vw] max-w-md">
           <div className="flex justify-center">
             <Image
               src={profilePicture || "https://github.com/shadcn.png"}
@@ -271,7 +271,7 @@ const TopBar = ({ userId }) => {
           {/* Credits */}
           <div className="flex justify-center items-center text-lg">
             <span className="mr-2"> {credits}</span>
-            <Image src="/chirpsIcon.png" height={20} width={20} />
+            <Image src="/chirpsIcon.png" height={20} width={20} alt="Chirps"/>
           </div>
 
           {/* Buttons */}
