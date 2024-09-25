@@ -612,7 +612,7 @@ const StreamPage = ({ params }) => {
         }
 
         // Centralized toast logic: Show toast for chirps trigger from useEffect
-   
+
         setIsChirpsModalOpen(false);
         setChirpsMessage(""); // Reset message
       }
@@ -1038,7 +1038,7 @@ const StreamPage = ({ params }) => {
                   {(msg.chatAuthor === viewerUsername ||
                     username === viewerUsername) && (
                     <button
-                      className="text-red-500 text-xl absolute right-0 hidden group-hover:block bg-gray-400 rounded-r bg-opacity-30 h-full pl-1"
+                      className="text-red-500 text-xl absolute right-0 hidden group-hover:block bg-gradient-to-r from-slate-700  to-gray-800 rounded-r-[0.125rem] bg-opacity-1 h-full pl-1"
                       onClick={() => handleDeleteMessage(msg)}
                     >
                       <MdDelete className="text-red-700 items-center mx-2 " />

@@ -195,7 +195,12 @@ const TopBar = ({ userId }) => {
     <>
       {/* TopBar */}
       <header className="flex justify-between items-center p-4 bg-purple-950 text-white">
-        <div className="flex items-center cursor-pointer">
+        <div
+          className="flex items-center cursor-pointer"
+          onClick={() => {
+            router.push(`/`);
+          }}
+        >
           <Image
             loading="eager"
             src="/houl_darker_svg.svg"
@@ -203,9 +208,6 @@ const TopBar = ({ userId }) => {
             width={50}
             alt="Houl"
             className="cursor-pointer"
-            onClick={() => {
-              router.push(`/`);
-            }}
           />
           <p className="text-[2rem] ml-2 lexend-topbarLogo hidden lg:block">
             Houl
@@ -271,7 +273,7 @@ const TopBar = ({ userId }) => {
           {/* Credits */}
           <div className="flex justify-center items-center text-lg">
             <span className="mr-2"> {credits}</span>
-            <Image src="/chirpsIcon.png" height={20} width={20} alt="Chirps"/>
+            <Image src="/chirpsIcon.png" height={20} width={20} alt="Chirps" />
           </div>
 
           {/* Buttons */}
