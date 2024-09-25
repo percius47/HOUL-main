@@ -41,7 +41,9 @@ const TopBar = ({ userId }) => {
   const [changesMade, setChangesMade] = useState(false);
   const [newProfilePictureFile, setNewProfilePictureFile] = useState(null); // Track uploaded file
   const [originalProfilePicture, setOriginalProfilePicture] = useState(""); // Store original profile picture for undo
-
+  const [loading, setLoading] = useState(false); // For showing loading state
+  const [ivsData, setIvsData] = useState(null); // To store the response from IVS API
+  const [channelCreated, setChannelCreated] = useState();
   const router = useRouter();
 
   useEffect(() => {
@@ -60,6 +62,7 @@ const TopBar = ({ userId }) => {
           setEditableUsername(userData.username);
           setIsStreaming(userData.isStreaming);
           setCredits(userData?.credits > -1 ? userData?.credits : -1);
+          setChannelCreated(userData.channelCreated);
           setProfilePicture(
             userData?.photoUrl || "https://github.com/shadcn.png"
           );
@@ -190,6 +193,44 @@ const TopBar = ({ userId }) => {
       console.error("Error saving changes: ", error);
     }
   };
+  //   // Function to call the createIVSChannel API
+  const createIVSChannelHandler = async () => {
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/createIVSChannel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: username }), // Assuming you're testing with "Houler"
+      });
+
+      if (!response.ok) {
+        console.error("Error creating IVS channel:", response.statusText);
+        return;
+      }
+
+      const data = await response.json();
+      setIvsData(data);
+      console.log("IVS Channel Created: ", data);
+      // After successful channel creation, update Firestore
+      const userDocRef = doc(db, "users", userId); // Firestore doc reference for the user
+
+      await updateDoc(userDocRef, {
+        serverUrl: data.serverUrl,
+        streamKey: data.streamKey,
+        streamUrl: data.streamUrl,
+        channelCreated: true,
+      });
+      setChannelCreated(true);
+      console.log("User Firestore document updated with IVS channel details");
+    } catch (error) {
+      console.error("Error calling API:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -216,16 +257,27 @@ const TopBar = ({ userId }) => {
 
         {/* Right Side - Profile Picture and Go Live/Stop Stream Button */}
         <div className="flex items-center space-x-4">
-          {isStreaming ? (
-            <Button className="bg-red-600" onClick={handleStopStream}>
-              Stop Stream
+          {/* {channelCreated === true ? ( */}
+            <>
+              {isStreaming ? (
+                <Button className="bg-red-600" onClick={handleStopStream}>
+                  Stop Stream
+                </Button>
+              ) : (
+                <Button className="bg-green-600" onClick={handleGoLive}>
+                  Go Live
+                </Button>
+              )}
+            </>
+           {/* ): ( */}
+            <Button
+              onClick={createIVSChannelHandler}
+              // disabled={!user || loading}
+              className="bg-blue-600 text-white p-2 rounded"
+            >
+              {loading ? "Creating Channel..." : "Create IVS Channel"}
             </Button>
-          ) : (
-            <Button className="bg-green-600" onClick={handleGoLive}>
-              Go Live
-            </Button>
-          )}
-
+           {/* )} */}
           {/* Profile Picture */}
           {profilePicture && (
             <Image

@@ -16,18 +16,19 @@ export default function Home() {
     if (!user) return;
 
     const userDoc = doc(db, "users", user.uid);
-
     const docSnap = await getDoc(userDoc);
-// console.log("photourl---",user,user?.photoURL);
 
     if (!docSnap.exists()) {
+    
+
       await setDoc(userDoc, {
         username: user.email.match(/^([^@]+)/)[0],
         isStreaming: false,
         subscribers: 0,
-        photoUrl: user?.photoUrl||null,
-        credits:100,
-        serverURL: "rtmp://13.234.177.100:1935/houl1/live1", //default channel
+        photoUrl: user?.photoUrl || null,
+        credits: 100,
+        channelCreated:false,
+        serverUrl: "rtmp://13.234.177.100:1935/houl1/live1", //default channel
         streamKey: "live1", //default key
         streamUrl:
           "https://f53112b70bc31005.mediapackage.ap-south-1.amazonaws.com/out/v1/800c429a166b4c87afc03c4e6f2cac44/index.m3u8", //  default  streamUrl

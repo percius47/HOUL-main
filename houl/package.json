@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-ivs": "^3.658.0",
     "@headlessui/react": "^2.1.3",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-avatar": "^1.1.0",

@@ -22,21 +22,26 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [streamUrl, setStreamUrl] = useState("");
   const [streamName, setStreamName] = useState("");
-
-  const serverUrl = "rtmp://13.234.177.100:1935/houl1/live1";
-  const streamKey = "live1";
+  const [serverUrl, setServerUrl] = useState("");
+  const [streamKey, setStreamKey] = useState("");
+  // const serverUrl = "rtmp://13.234.177.100:1935/houl1/live1";
+  // const streamKey = "live1";
 
   const router = useRouter();
   useEffect(() => {
-    if (isPreviewing) {
+    // if (isPreviewing) {
       const userDoc = doc(db, "users", userId);
       const unsubscribe = onSnapshot(userDoc, (doc) => {
+        console.log("doc.data()----", doc.data());
+
+        setServerUrl(doc.data().serverUrl);
+        setStreamKey(doc.data().streamKey);
         setStreamUrl(doc.data().streamUrl);
       });
 
       return () => unsubscribe();
-    }
-  }, [isPreviewing, userId]);
+    // }
+  }, [ userId]);
 
   const handleCopyServerUrl = () => {
     navigator.clipboard.writeText(serverUrl).then(() => {
