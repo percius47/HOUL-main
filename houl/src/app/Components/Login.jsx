@@ -75,9 +75,18 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <Image src="/houl_darker_svg.svg" width={100} height={100} alt="Houl"/>
-      <h1 className="my-3 text-7xl font-bold text-purple-700">H O U L</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900">
+      <div className="flex mt-2  px-2 ">
+        <Image
+          src="/houl_darker_svg.svg"
+          width={70}
+          height={70}
+          alt="Houl"
+          className="mx-1"
+        />
+        <h1 className="my-3 text-7xl font-bold text-purple-700">Houl</h1>
+      </div>
+
       {/* <h2 className="mb-4 text-2xl font-bold">
         {isSignUp ? "Sign Up" : "Login"}
       </h2> */}
@@ -115,7 +124,7 @@ const Login = ({ onLogin }) => {
         className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
         onClick={handleGoogleLogin}
       >
-        <Image src="/googleLogo.png" width={40} height={40} alt="Google"/>
+        <Image src="/googleLogo.png" width={40} height={40} alt="Google" />
         {isSignUp ? "Sign Up with Google" : "Sign in with Google"}
       </Button>
       {/* <Button
