@@ -257,7 +257,7 @@ const TopBar = ({ userId }) => {
 
         {/* Right Side - Profile Picture and Go Live/Stop Stream Button */}
         <div className="flex items-center space-x-4">
-          {/* {channelCreated === true ? ( */}
+          {channelCreated ? (
             <>
               {isStreaming ? (
                 <Button className="bg-red-600" onClick={handleStopStream}>
@@ -269,15 +269,15 @@ const TopBar = ({ userId }) => {
                 </Button>
               )}
             </>
-           {/* ): ( */}
+           ): (
             <Button
               onClick={createIVSChannelHandler}
               // disabled={!user || loading}
               className="bg-blue-600 text-white p-2 rounded"
             >
-              {loading ? "Creating Channel..." : "Create IVS Channel"}
+              {loading ? "Creating Channel..." : "Create Channel"}
             </Button>
-           {/* )} */}
+           )}
           {/* Profile Picture */}
           {profilePicture && (
             <Image

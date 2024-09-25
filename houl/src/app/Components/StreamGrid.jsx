@@ -112,7 +112,7 @@ const StreamGrid = () => {
                 </h5>
                 {/* Viewer count */}
                 <span className="txt-[1rem] flex justify-between items-center sm:text-md text-red-500 ml-2">
-                  {stream.viewers.length}
+                  {stream?.viewers?.length||0}
                   <UserIcon
                     className="text-red-400 inline fill-red-500 mx-1"
                     height={12}

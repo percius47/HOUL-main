@@ -32,7 +32,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
     // if (isPreviewing) {
       const userDoc = doc(db, "users", userId);
       const unsubscribe = onSnapshot(userDoc, (doc) => {
-        console.log("doc.data()----", doc.data());
+        // console.log("doc.data()----", doc.data());
 
         setServerUrl(doc.data().serverUrl);
         setStreamKey(doc.data().streamKey);
@@ -99,7 +99,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                 HLS Server URL for OBS
               </label>
               <div className="flex items-center space-x-2">
-                <p className="flex-1">{serverUrl}</p>
+                <p className="flex-1 w-full text-sm">{serverUrl}</p>
                 <Button
                   className="flex items-center"
                   onClick={handleCopyServerUrl}
@@ -117,7 +117,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                 HLS Stream Key for OBS
               </label>
               <div className="flex items-center space-x-2">
-                <p className="flex-1">{streamKey}</p>
+                <p className="flex-1 w-full text-xs">{streamKey}</p>
                 <Button
                   className="flex items-center"
                   onClick={handleCopyStreamKey}

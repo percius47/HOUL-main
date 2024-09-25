@@ -34,6 +34,7 @@ import { CoinsIcon, HeartCrack, UserIcon, UserSquare2 } from "lucide-react"; // 
 import Script from "next/script";
 import { HeartFilledIcon } from "@radix-ui/react-icons";
 import { v4 as uuidv4 } from "uuid"; // For generating unique viewer IDs
+import { number } from "zod";
 
 const StreamPage = ({ params }) => {
   const { username } = params;
@@ -587,7 +588,10 @@ const StreamPage = ({ params }) => {
         const newChirpEvent = {
           username: viewerUsername,
           chirpsAmount,
-          chirpsMessage: chirpsMessage.length > 0 ? chirpsMessage : null,
+          chirpsMessage:
+            chirpsMessage.length > 0 && chirpsAmount >= 30
+              ? chirpsMessage
+              : null,
           timestamp: new Date(),
           displayed: false, // This will be handled in the useEffect for showing toasts
         };
@@ -597,7 +601,7 @@ const StreamPage = ({ params }) => {
         });
 
         // Append the chirps message to the chat as well
-        if (chirpsMessage.length > 0) {
+        if (chirpsMessage.length > 0 && chirpsAmount >= 30) {
           const newChatMessage = {
             chatAuthor: viewerUsername,
             message: chirpsMessage,
@@ -614,6 +618,7 @@ const StreamPage = ({ params }) => {
         // Centralized toast logic: Show toast for chirps trigger from useEffect
 
         setIsChirpsModalOpen(false);
+        setMessageInput(""); // Reset input after sending
         setChirpsMessage(""); // Reset message
       }
     } catch (error) {
@@ -866,7 +871,7 @@ const StreamPage = ({ params }) => {
                 url={streamUrl}
                 playing={true}
                 controls
-                muted
+                autoPlay={true}
                 playsinline={true}
                 className="react-player"
                 width="100%"
@@ -1114,7 +1119,17 @@ const StreamPage = ({ params }) => {
               Minimum 5 chirps required.
             </p>
           ) : (
-            <p className="text-center mb-4">{chirpsAmount} Chirps</p>
+            <div className="flex justify-between max-w-[40%] items-center mx-auto mb-2 mt-4">
+              <input
+                type="number"
+                min={5}
+                max={viewerCredits}
+                value={chirpsAmount}
+                className=" bg-transparent text-center w-[2vw]"
+                onChange={(e) => setChirpsAmount(Number(e.target.value))}
+              />
+              <p className="text-center ml-[0.25rem]">Chirps</p>
+            </div>
           )}
 
           <input
@@ -1125,7 +1140,7 @@ const StreamPage = ({ params }) => {
               setMessageInput(e.target.value);
             }}
             disabled={chirpsAmount >= 30 ? false : true}
-            className="w-full p-2 rounded bg-gray-700 text-white"
+            className="w-full p-2 rounded bg-gray-700 text-white disabled:bg-gray-600"
           />
 
           <Button

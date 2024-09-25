@@ -15,9 +15,11 @@ export async function POST(req) {
 
     const params = {
       name: username, // Channel name
-      type: "BASIC", // Channel type (BASIC or STANDARD)
+      type: "STANDARD", // Channel type (BASIC or STANDARD)
       latencyMode: "LOW", // LOW or NORMAL latency
       authorized: false, // Set to true if you want the channel to be restricted
+      recordingConfigurationArn:
+        "arn:aws:ivs:ap-south-1:699475928277:recording-configuration/Wx7mmhMo4fCt",
     };
 
     const command = new CreateChannelCommand(params);
