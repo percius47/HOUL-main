@@ -328,7 +328,7 @@ const StreamPage = ({ params }) => {
       setFollowers(followers + 1); // Update local state
       setIsFollowing(true); // Set following status to true
       toast.success(`You started following ${username}`, {
-        position: "bottom-center",
+        position: "top-center",
       });
     } catch (error) {
       console.error("Error following user:", error);
@@ -347,7 +347,7 @@ const StreamPage = ({ params }) => {
       setFollowers(followers - 1); // Update local state
       setIsFollowing(false); // Set following status to false
       toast.success(`You unfollowed ${username}`, {
-        position: "bottom-center",
+        position: "top-center",
       });
     } catch (error) {
       console.error("Error unfollowing user:", error);
@@ -359,7 +359,7 @@ const StreamPage = ({ params }) => {
   const handleSubscribe = async () => {
     if (viewerCredits < 25) {
       toast.error(`Get more credits to subscribe to ${username}`, {
-        position: "bottom-center",
+        position: "top-center",
       });
       return;
     }
@@ -382,7 +382,7 @@ const StreamPage = ({ params }) => {
       setViewerCredits(viewerCredits - 25); // Update credits in state
 
       toast.success(`Subscribed successfully to ${username} for 1 month!`, {
-        position: "bottom-center",
+        position: "top-center",
       });
     } catch (error) {
       console.error("Error subscribing:", error);
@@ -444,19 +444,131 @@ const StreamPage = ({ params }) => {
     }
   };
 
+  //useEffect for checking new chirp activity
+  useEffect(() => {
+    if (!username) return;
+
+    // Fetch stream data
+    const streamsQuery = query(
+      collection(db, "streams"),
+      where("author", "==", username)
+    );
+
+    const unsubscribe = onSnapshot(streamsQuery, async (snapshot) => {
+      if (!snapshot.empty) {
+        const streamDoc = snapshot.docs[0]; // Get the first stream document
+        const streamData = streamDoc.data();
+        const chirpsEvents = streamData.chirpsEvents || [];
+
+        // Find the most recent chirp event and show a toast for it if not displayed
+        if (chirpsEvents.length > 0) {
+          const recentChirp = chirpsEvents[chirpsEvents.length - 1];
+
+          if (!recentChirp.displayed) {
+            // Show the toast
+            toast(
+              `${
+                recentChirp.chirpsMessage
+                  ? `🎉 ${recentChirp.username} sent x${recentChirp.chirpsAmount} chirps!: ${recentChirp.chirpsMessage}`
+                  : `🎉 ${recentChirp.username} sent x${recentChirp.chirpsAmount} chirps!`
+              }`,
+              {
+                duration: 7000,
+                position: "top-center",
+                style: {
+                  backgroundColor: "#f59e0b",
+                  color: "#fff",
+                  padding: "2 rem 3rem",
+                },
+              }
+            );
+
+            // After displaying, update the chirp event's "displayed" field to true
+            const updatedChirpsEvents = chirpsEvents.map((chirp) =>
+              chirp === recentChirp ? { ...chirp, displayed: true } : chirp
+            );
+
+            // Update the Firestore document with the modified chirpsEvents array
+            await updateDoc(streamDoc.ref, {
+              chirpsEvents: updatedChirpsEvents,
+            });
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup subscription on component unmount
+  }, [username]);
+
+  // Handle sending chirps modal logic
+  // const handleSendChirps = async () => {
+  //   if (viewerCredits < chirpsAmount) {
+  //     toast.error(
+  //       `You don't have enough credits to send ${chirpsAmount} chirps`,
+  //       {
+  //         position: "top-center",
+  //       }
+  //     );
+  //     return;
+  //   }
+
+  //   const viewerDocRef = doc(db, "users", user.uid);
+  //   const streamsQuery = query(
+  //     collection(db, "streams"),
+  //     where("author", "==", username)
+  //   );
+
+  //   try {
+  //     // Deduct chirps (credits) from the viewer
+  //     await updateDoc(viewerDocRef, {
+  //       credits: viewerCredits - chirpsAmount,
+  //     });
+
+  //     setViewerCredits(viewerCredits - chirpsAmount);
+  //     if (chirpsMessage.length > 0) {
+  //       handleSendMessage("chirp", chirpsAmount); // Send chirp message if available
+  //     }
+
+  //     // Store chirps event in the Firestore for all viewers
+  //     const streamSnapshot = await getDocs(streamsQuery);
+  //     if (!streamSnapshot.empty) {
+  //       const streamDocRef = streamSnapshot.docs[0].ref;
+
+  //       // Update the stream document with chirps information
+  //       await updateDoc(streamDocRef, {
+  //         chirpsEvents: arrayUnion({
+  //           username: viewerUsername,
+  //           chirpsAmount,
+  //           chirpsMessage: chirpsMessage.length > 0 ? chirpsMessage : null,
+  //           timestamp: new Date(),
+  //           displayed: false, // This will be handled in the useEffect for showing toasts
+  //         }),
+  //       });
+
+  //       setIsChirpsModalOpen(false);
+  //       setChirpsMessage(""); // Reset message
+  //     }
+  //   } catch (error) {
+  //     console.error("Error sending chirps:", error);
+  //   }
+  // };
   // Handle sending chirps modal logic
   const handleSendChirps = async () => {
     if (viewerCredits < chirpsAmount) {
       toast.error(
         `You don't have enough credits to send ${chirpsAmount} chirps`,
         {
-          position: "bottom-center",
+          position: "top-center",
         }
       );
       return;
     }
 
     const viewerDocRef = doc(db, "users", user.uid);
+    const streamsQuery = query(
+      collection(db, "streams"),
+      where("author", "==", username)
+    );
 
     try {
       // Deduct chirps (credits) from the viewer
@@ -465,47 +577,51 @@ const StreamPage = ({ params }) => {
       });
 
       setViewerCredits(viewerCredits - chirpsAmount);
-      if (chirpsMessage.length > 0) {
-        handleSendMessage("chirp", chirpsAmount);
-      }
-      // Show chirps message to everyone
-      setIsChirpsModalOpen(false);
-      toast.success(`You chirped x${chirpsAmount}!`, {
-        position: "bottom-center",
-      });
 
-      // Show big modal for all viewers
-      setTimeout(() => {
-        toast(
-          `${
-            chirpsMessage.length > 0
-              ? `${chirpsMessage} x${chirpsAmount}chirps!`
-              : `🎉 ${viewerUsername} sent ${chirpsAmount} chirps!`
-          }`,
-          {
-            duration: 3000,
-            position: "center",
-            style: {
-              backgroundColor: "#f59e0b",
-              color: "#fff",
-              padding: "3rem",
-              position: "absolute",
-              right: "0",
-              left: "0",
-              top: "0",
-              bottom: "0",
-              margin: "auto",
-            },
-          }
-        );
-      }, 1000);
-      setChirpsMessage("");
+      // Store chirps event in the Firestore for all viewers
+      const streamSnapshot = await getDocs(streamsQuery);
+      if (!streamSnapshot.empty) {
+        const streamDocRef = streamSnapshot.docs[0].ref;
+
+        // Add chirps event to Firestore
+        const newChirpEvent = {
+          username: viewerUsername,
+          chirpsAmount,
+          chirpsMessage: chirpsMessage.length > 0 ? chirpsMessage : null,
+          timestamp: new Date(),
+          displayed: false, // This will be handled in the useEffect for showing toasts
+        };
+
+        await updateDoc(streamDocRef, {
+          chirpsEvents: arrayUnion(newChirpEvent),
+        });
+
+        // Append the chirps message to the chat as well
+        if (chirpsMessage.length > 0) {
+          const newChatMessage = {
+            chatAuthor: viewerUsername,
+            message: chirpsMessage,
+            chatTimestamp: new Date(),
+            messageType: "chirp", // Mark as a chirp message
+            chirpAmount: chirpsAmount,
+          };
+
+          await updateDoc(streamDocRef, {
+            chat: arrayUnion(newChatMessage), // Add message to chat
+          });
+        }
+
+        // Centralized toast logic: Show toast for chirps trigger from useEffect
+   
+        setIsChirpsModalOpen(false);
+        setChirpsMessage(""); // Reset message
+      }
     } catch (error) {
       console.error("Error sending chirps:", error);
     }
   };
 
-  const handleSendMessage = async (messageType, chirpAmount) => {
+  const handleSendMessage = async () => {
     if (!messageInput.trim()) return;
 
     const streamsQuery = query(
@@ -514,8 +630,6 @@ const StreamPage = ({ params }) => {
     );
 
     const streamSnapshot = await getDocs(streamsQuery);
-    console.log("streamSnapp", streamSnapshot);
-
     if (!streamSnapshot.empty) {
       const streamDocRef = streamSnapshot.docs[0].ref;
 
@@ -526,21 +640,56 @@ const StreamPage = ({ params }) => {
         : "Anonymous";
 
       const newMessage = {
-        chatAuthor: chatAuthor,
+        chatAuthor,
         message: messageInput,
         chatTimestamp: new Date(),
-        messageType: messageType === "chirp" ? "chirp" : "normal",
-        chirpAmount: messageType === "chirp" ? `${chirpAmount}` : 0,
-        // photoUrl: user.photoUrl || "https://github.com/shadcn.png",
+        messageType: "normal", // Regular chat message
       };
 
       await updateDoc(streamDocRef, {
-        chat: arrayUnion(newMessage),
+        chat: arrayUnion(newMessage), // Add to chat
       });
 
-      setMessageInput("");
+      setMessageInput(""); // Reset input after sending
     }
   };
+
+  // const handleSendMessage = async (messageType, chirpAmount) => {
+  //   if (!messageInput.trim()) return;
+
+  //   const streamsQuery = query(
+  //     collection(db, "streams"),
+  //     where("author", "==", username)
+  //   );
+
+  //   const streamSnapshot = await getDocs(streamsQuery);
+  //   console.log("streamSnapp", streamSnapshot);
+
+  //   if (!streamSnapshot.empty) {
+  //     const streamDocRef = streamSnapshot.docs[0].ref;
+
+  //     const userDocRef = doc(db, "users", user.uid);
+  //     const userDoc = await getDoc(userDocRef);
+  //     const chatAuthor = userDoc.exists()
+  //       ? userDoc.data().username
+  //       : "Anonymous";
+
+  //     const newMessage = {
+  //       chatAuthor: chatAuthor,
+  //       message: messageInput,
+  //       chatTimestamp: new Date(),
+  //       messageType: messageType === "chirp" ? "chirp" : "normal",
+  //       chirpAmount: messageType === "chirp" ? `${chirpAmount}` : 0,
+  //       // photoUrl: user.photoUrl || "https://github.com/shadcn.png",
+  //     };
+
+  //     await updateDoc(streamDocRef, {
+  //       chat: arrayUnion(newMessage),
+  //     });
+
+  //     setMessageInput("");
+  //   }
+  // };
 
   const handleDeleteMessage = async (messageToDelete) => {
     try {
@@ -601,7 +750,7 @@ const StreamPage = ({ params }) => {
 
     if (!razorpayLoaded) {
       toast.error("Failed to load Razorpay SDK. Please try again.", {
-        position: "bottom-center",
+        position: "top-center",
       });
       return;
     }
@@ -619,7 +768,7 @@ const StreamPage = ({ params }) => {
 
       if (!data.orderId) {
         toast.error("Failed to create Razorpay order. Please try again.", {
-          position: "bottom-center",
+          position: "top-center",
         });
         return;
       }
@@ -651,14 +800,14 @@ const StreamPage = ({ params }) => {
 
             // Show a success toast
             toast.success(`You successfully bought ${chirps} chirps!`, {
-              position: "bottom-center",
+              position: "top-center",
             });
           } catch (error) {
             console.error("Error adding chirps:", error);
             toast.error(
               "Failed to update chirps after payment. Please contact support.",
               {
-                position: "bottom-center",
+                position: "top-center",
               }
             );
           }
@@ -668,7 +817,7 @@ const StreamPage = ({ params }) => {
           email: user.email,
         },
         theme: {
-          color: "#f59e0b",
+          color: "#5d0690",
         },
       };
 
