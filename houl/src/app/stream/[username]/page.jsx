@@ -30,12 +30,18 @@ import CustomAvatar from "@/app/Components/CustomAvatar";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast"; // Import toast for notifications
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
-import { CoinsIcon, HeartCrack, UserIcon, UserSquare2 } from "lucide-react"; // Chirps Icon
+import {
+  CoinsIcon,
+  HeartCrack,
+  HelpCircle,
+  UserIcon,
+  UserSquare2,
+} from "lucide-react"; // Chirps Icon
 import Script from "next/script";
 import { HeartFilledIcon } from "@radix-ui/react-icons";
 import { v4 as uuidv4 } from "uuid"; // For generating unique viewer IDs
 import { number } from "zod";
-
+import Joyride from "react-joyride";
 const StreamPage = ({ params }) => {
   const { username } = params;
   const [streamUrl, setStreamUrl] = useState(null);
@@ -63,6 +69,8 @@ const StreamPage = ({ params }) => {
   const [followers, setFollowers] = useState(0);
   const [viewerCount, setViewerCount] = useState(0); // Live viewer count
   const [streamType, setStreamType] = useState(null);
+  const [firstGuideRun, setFirstGuideRun] = useState(true); // First run when page loads
+  const [runGuide, setRunGuide] = useState(false); // For subsequent runs
   const viewerId = uuidv4(); // Generate a unique ID for the viewer
 
   useEffect(() => {
@@ -482,58 +490,6 @@ const StreamPage = ({ params }) => {
     return () => unsubscribe(); // Cleanup subscription on component unmount
   }, [username]);
 
-  // const handleSendChirps = async () => {
-  //   if (viewerCredits < chirpsAmount) {
-  //     toast.error(
-  //       `You don't have enough credits to send ${chirpsAmount} chirps`,
-  //       {
-  //         position: "top-center",
-  //       }
-  //     );
-  //     return;
-  //   }
-
-  //   const viewerDocRef = doc(db, "users", user.uid);
-  //   const streamsQuery = query(
-  //     collection(db, "streams"),
-  //     where("author", "==", username)
-  //   );
-
-  //   try {
-  //     // Deduct chirps (credits) from the viewer
-  //     await updateDoc(viewerDocRef, {
-  //       credits: viewerCredits - chirpsAmount,
-  //     });
-
-  //     setViewerCredits(viewerCredits - chirpsAmount);
-  //     if (chirpsMessage.length > 0) {
-  //       handleSendMessage("chirp", chirpsAmount); // Send chirp message if available
-  //     }
-
-  //     // Store chirps event in the Firestore for all viewers
-  //     const streamSnapshot = await getDocs(streamsQuery);
-  //     if (!streamSnapshot.empty) {
-  //       const streamDocRef = streamSnapshot.docs[0].ref;
-
-  //       // Update the stream document with chirps information
-  //       await updateDoc(streamDocRef, {
-  //         chirpsEvents: arrayUnion({
-  //           username: viewerUsername,
-  //           chirpsAmount,
-  //           chirpsMessage: chirpsMessage.length > 0 ? chirpsMessage : null,
-  //           timestamp: new Date(),
-  //           displayed: false, // This will be handled in the useEffect for showing toasts
-  //         }),
-  //       });
-
-  //       setIsChirpsModalOpen(false);
-  //       setChirpsMessage(""); // Reset message
-  //     }
-  //   } catch (error) {
-  //     console.error("Error sending chirps:", error);
-  //   }
-  // };
-  // Handle sending chirps modal logic
   const handleSendChirps = async () => {
     if (viewerCredits < chirpsAmount) {
       toast.error(
@@ -676,10 +632,6 @@ const StreamPage = ({ params }) => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  const openBuyChirpsModal = () => {
-    setIsBuyChirpsModalOpen(true);
-  };
-
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
@@ -787,9 +739,111 @@ const StreamPage = ({ params }) => {
       />
     );
   }
+  // Callback to reset the state after the guide finishes
+  const handleJoyrideCallback = (data) => {
+    const { status } = data;
+    const finishedStatuses = ["finished", "skipped"];
 
+    if (finishedStatuses.includes(status)) {
+      setRunGuide(false); // Reset the run state once the guide finishes or is skipped
+    }
+  };
+
+  // Function to handle the button click to start the guide
+  const startGuide = () => {
+    setRunGuide(true); // Start Joyride when button is clicked
+  };
+
+  const steps = [
+    {
+      target: ".streamPage_Video",
+      content: "This is the Live Video area.",
+      placement: "center",
+      floaterProps: {
+        placement: "right", // Position the tooltip above the beacon
+        offset: {
+          x: 0, // No horizontal offset
+          y: 0, // Adjust the vertical offset as needed
+        },
+      },
+    },
+    {
+      target: ".streamPage_SubscribeFollow",
+      content: "You can follow or Subscribe to streamers you like from here!",
+    },
+    {
+      target: ".streamPage_Chat",
+      content: "This is the Chat Section",
+      placement: "left",
+    },
+    {
+      target: ".streamPage_ChatWindow",
+      content: "This is Live Chat.",
+      placement: "left",
+    },
+    {
+      target: ".streamPage_ChatInput",
+      content: "This is Live Chat Input Field.",
+      placement: "top",
+    },
+    {
+      target: ".streamPage_ChatCredits",
+      content:
+        "You can Gift or Buy credits to gift streamers. These credits can be used as fuel for starting streams on Houl, availing great discounts on our partner brands or even be credited as Cash!",
+      placement: "top",
+    },
+    {
+      target: ".streamPage_rerunGuide",
+      content:
+        "Re-run Guide",
+      placement: "left",
+    },
+  ];
   return (
     <>
+      {/* Help Icon */}
+      <HelpCircle
+        className="absolute right-0 top-[10vh] cursor-pointer h-10 w-10 z-50 fill-red-600 streamPage_rerunGuide"
+        onClick={startGuide}
+      />
+
+      {/* Joyride Component */}
+      <Joyride
+        run={firstGuideRun}
+        steps={steps}
+        continuous
+        styles={{
+          options: {
+            arrowColor: "#fcfefd",
+            beaconSize: 36,
+            backgroundColor: "#fcfefd",
+            overlayColor: "rgba(25, 9, 1, 0.739)",
+            primaryColor: "#ff0000",
+            textColor: "#120022",
+            width: 400,
+            zIndex: 1000,
+          },
+        }}
+      />
+      {/* Joyride Component runonly on clicking Icon*/}
+      <Joyride
+        run={runGuide} // Runs Joyride when button is clicked
+        steps={steps}
+        continuous
+        callback={handleJoyrideCallback} // Callback to handle finishing or skipping
+        styles={{
+          options: {
+            arrowColor: "#fcfefd",
+            beaconSize: 36,
+            backgroundColor: "#fcfefd",
+            overlayColor: "rgba(25, 9, 1, 0.739)",
+            primaryColor: "#ff0000",
+            textColor: "#120022",
+            width: 400,
+            zIndex: 1000,
+          },
+        }}
+      />
       <TopBar username={user.email} userId={user.uid} />
       <Toaster
         toastOptions={{
@@ -807,7 +861,7 @@ const StreamPage = ({ params }) => {
         }}
       />
       <div className="flex flex-col lg:flex-row p-4 justify-between bg-gray-900 h-max">
-        <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4 relative">
+        <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4 relative  streamPage_Video">
           {streamUrl ? (
             <div className="relative">
               {streamType == "demo" ? (
@@ -815,7 +869,8 @@ const StreamPage = ({ params }) => {
                   className="w-[98%] mx-auto mb-1 h-[60vh]"
                   // width="90%"
                   height="auto"
-                  src={streamUrl}
+                  muted="false"
+                  src={`${streamUrl}&amp;mute=1`}
                   title="Houl Demo Stream"
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -847,7 +902,7 @@ const StreamPage = ({ params }) => {
                 />
               )}
               <div className="flex justify-between items-center mt-2 py-1">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white ">
+                <h2 className="text-xl sm:text-2xl md:text-3xl  font-bold text-white ">
                   {streamName}
                 </h2>
                 {/* Viewer count */}
@@ -886,7 +941,7 @@ const StreamPage = ({ params }) => {
                 </div>
 
                 {viewerUsername !== username && (
-                  <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                  <div className="flex items-center space-x-2 mt-2 sm:mt-0 streamPage_SubscribeFollow">
                     <div
                       onClick={isFollowing ? handleUnfollow : handleFollow}
                       className={`rounded flex  items-center p-1 cursor-pointer ${
@@ -945,10 +1000,10 @@ const StreamPage = ({ params }) => {
           )}
         </div>
 
-        <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative">
+        <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative streamPage_Chat">
           <h2 className="text-xl font-bold text-white ml-2">Live Chat</h2>
           <div
-            className="flex-grow mt-4 overflow-y-auto "
+            className="flex-grow mt-4 overflow-y-auto streamPage_ChatWindow"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <style jsx>{`
@@ -1012,7 +1067,7 @@ const StreamPage = ({ params }) => {
               <p className="text-gray-500 ml-2">No messages yet.</p>
             )}
           </div>
-          <div className="w-full bg-purple-700 pl-1 py-1">
+          <div className="w-full bg-purple-700 pl-1 py-1 streamPage_ChatInput">
             <div className="flex items-center w-full bg-purple-700 pl-1 py-1">
               <input
                 type="text"
@@ -1020,10 +1075,10 @@ const StreamPage = ({ params }) => {
                 onChange={(e) => setMessageInput(e.target.value)}
                 onSubmit={handleSendMessage}
                 placeholder="Type a message..."
-                className="flex-grow px-2 rounded-l bg-transparent text-white focus-within:border-transparent outline-none w-[60%]"
+                className="flex-grow px-2 py-1 rounded bg-purple-800 text-white focus-within:border-transparent outline-none w-full"
               />
               <div
-                className=" flex items-center mx-1 cursor-pointer text-gray-300 font-light text-right w-[30%]  justify-end"
+                className=" flex items-center mx-1 cursor-pointer text-gray-300 font-light text-right w-[30%]  justify-end streamPage_ChatCredits"
                 onClick={() => {
                   setIsChirpsModalOpen(true);
                 }}
@@ -1055,7 +1110,7 @@ const StreamPage = ({ params }) => {
         onClose={() => setIsChirpsModalOpen(false)}
         className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-75 "
       >
-        <DialogPanel className="bg-gray-800 p-6 rounded shadow-lg text-white sm:w-[45vw] w-[75vw] flex flex-col">
+        <DialogPanel className="bg-gray-900 p-6 rounded shadow-lg text-white sm:w-[45vw] w-[75vw] flex flex-col">
           <h3 className="text-xl mb-4 text-center">
             Send Chirps to {username}
           </h3>
@@ -1117,7 +1172,6 @@ const StreamPage = ({ params }) => {
           </Button>
         </DialogPanel>
       </Dialog>
-
       {/* Buy Chirps Modal */}
       <Dialog
         open={isBuyChirpsModalOpen}
@@ -1125,7 +1179,7 @@ const StreamPage = ({ params }) => {
         className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-75"
       >
         <DialogPanel
-          className="bg-gray-700 p-8 rounded shadow-lg text-black w-[90%] max-w-md relative"
+          className="bg-gray-900 p-8 rounded shadow-lg text-black w-[90%] max-w-md relative"
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
         >
           <h3 className="text-2xl mb-4 text-center text-white">Buy Chirps</h3>

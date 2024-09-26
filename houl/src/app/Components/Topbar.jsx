@@ -260,31 +260,37 @@ const TopBar = ({ userId }) => {
           {channelCreated ? (
             <>
               {isStreaming ? (
-                <Button className="bg-red-600" onClick={handleStopStream}>
+                <Button
+                  className="bg-red-600 topbar_StreamControlButton"
+                  onClick={handleStopStream}
+                >
                   Stop Stream
                 </Button>
               ) : (
-                <Button className="bg-green-600" onClick={handleGoLive}>
+                <Button
+                  className="bg-green-600 topbar_StreamControlButton"
+                  onClick={handleGoLive}
+                >
                   Go Live
                 </Button>
               )}
             </>
-           ): (
+          ) : (
             <Button
               onClick={createIVSChannelHandler}
               // disabled={!user || loading}
-              className="bg-blue-600 text-white p-2 rounded"
+              className="bg-blue-600 text-white p-2 rounded topbar_createChannelButton"
             >
               {loading ? "Creating Channel..." : "Create Channel"}
             </Button>
-           )}
+          )}
           {/* Profile Picture */}
           {profilePicture && (
             <Image
               src={profilePicture || "https://github.com/shadcn.png"}
               height={36}
               width={36}
-              className="h-9 w-9 rounded-full cursor-pointer"
+              className="h-9 w-9 rounded-full cursor-pointer topbar_profilePicture"
               alt="Profile Picture"
               onError={(e) => (e.target.src = "https://github.com/shadcn.png")}
               onClick={() => setIsProfileModalOpen(true)} // Open profile modal on click
@@ -309,7 +315,7 @@ const TopBar = ({ userId }) => {
         onClose={() => setIsProfileModalOpen(false)}
         className="fixed inset-0 z-10 flex items-center justify-center"
       >
-        <DialogPanel className="bg-gray-800 flex flex-col gap-1 items-center p-6 absolute lg:right-[4rem] right-[1rem] top-[4rem] rounded-lg text-white lg:w-[20vw] md:w-[30vw] w-[50vw] max-w-md">
+        <DialogPanel className="bg-gray-900 flex flex-col gap-1 items-center p-6 absolute lg:right-[4rem] right-[1rem] top-[4rem] rounded-lg text-white lg:w-[20vw] md:w-[30vw] w-[50vw] max-w-md">
           <div className="flex justify-center">
             <Image
               src={profilePicture || "https://github.com/shadcn.png"}
@@ -352,7 +358,7 @@ const TopBar = ({ userId }) => {
         onClose={() => setIsEditProfileOpen(false)}
         className="fixed inset-0 z-20 flex items-center justify-center  bg-gray-800 bg-opacity-90"
       >
-        <DialogPanel className="bg-gray-800 p-6 flex items-center flex-col rounded shadow-lg text-white lg:w-[30vw] w-[90vw] max-w-md">
+        <DialogPanel className="bg-gray-900 p-6 flex items-center flex-col rounded shadow-lg text-white lg:w-[30vw] w-[90vw] max-w-md">
           <h2 className="text-xl mb-4 text-center">Edit Profile</h2>
 
           {/* Profile Picture */}

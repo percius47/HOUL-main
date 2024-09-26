@@ -80,7 +80,7 @@ const StreamGrid = () => {
         </div>
       ) : streams.length > 0 ? (
         // Show streams after loading is complete
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 stream_grid">
           {streams.map((stream) => (
             <div
               key={stream.id}

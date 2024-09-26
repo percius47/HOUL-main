@@ -7,7 +7,7 @@ import TopBar from "./Components/Topbar";
 import StreamGrid from "./Components/StreamGrid";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db, auth } from "./firebase/firebase";
-
+import Joyride from "react-joyride";
 export default function Home() {
   const [user, setUser] = useState(null);
   const router = useRouter();
@@ -58,13 +58,47 @@ export default function Home() {
   if (!user) {
     return null; // You can return a loading spinner here if needed
   }
-
+const steps = [
+  {
+    target: ".topbar_profilePicture",
+    content: "This shows your Account Information.",
+  },
+  {
+    target: ".topbar_createChannelButton",
+    content:
+      "If you want to stream, Create a Live Streaming Channel by clicking here! You will get an option to 'Go Live' and you will be provided your OBS (required for Streaming) Server Url & Stream Key. Once Copied, you can start streaming from OBS, and see your preview on the next Step where you can name your stream and finally start Streaming!",
+  },
+  {
+    target: ".topbar_StreamControlButton",
+    content: "Start / Stop your Ongoing Stream from here.",
+  },
+  {
+    target: ".stream_grid",
+    content:
+      "This is the area where all Live Streams Appear, Click on any of them to start watching!",
+    placement: "top",
+  },
+];
   return (
     <div>
-      <TopBar
-        
-        userId={user.uid}
+      <Joyride
+        run={true}
+        steps={steps}
+        // continuous
+        styles={{
+          options: {
+            arrowColor: "#e3ffeb",
+            beaconSize: 36,
+            backgroundColor: "#e3ffeb",
+            overlayColor: "rgba(79, 26, 0, 0.4)",
+            primaryColor: "#ff0000",
+            textColor: "#004a14",
+            width: 400,
+            zIndex: 1000,
+          },
+        }}
       />
+      <TopBar userId={user.uid} />
       <StreamGrid userId={user.uid} />
     </div>
   );
