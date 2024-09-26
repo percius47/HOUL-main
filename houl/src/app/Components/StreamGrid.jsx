@@ -89,7 +89,7 @@ const StreamGrid = () => {
             >
               {stream.type == "demo" ? (
                 <iframe
-                  className="w-[98%] mx-auto mb-1"
+                  className="w-[373px] h-[209px] mx-auto mb-1"
                   // width="90%"
                   // height="auto"
                   src={stream.streamUrl}

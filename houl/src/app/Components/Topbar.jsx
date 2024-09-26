@@ -25,6 +25,7 @@ import { signOut } from "firebase/auth";
 import Image from "next/image";
 import { MdEdit } from "react-icons/md";
 import { Upload, X } from "lucide-react"; // X icon for undo changes
+import BuyChirpsModal from "./BuyChirpsModal";
 
 const TopBar = ({ userId }) => {
   const [showModal, setShowModal] = useState(false);
@@ -44,6 +45,7 @@ const TopBar = ({ userId }) => {
   const [loading, setLoading] = useState(false); // For showing loading state
   const [ivsData, setIvsData] = useState(null); // To store the response from IVS API
   const [channelCreated, setChannelCreated] = useState();
+  const [isBuyChirpsModalOpen, setIsBuyChirpsModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -329,7 +331,8 @@ const TopBar = ({ userId }) => {
           <span className="text-center text-[0.95rem]">@{username}</span>
 
           {/* Credits */}
-          <div className="flex justify-center items-center text-lg">
+          <div className="flex justify-center items-center text-lg cursor-pointer"onClick={() => {
+                    setIsBuyChirpsModalOpen(true);}}>
             <span className="mr-2"> {credits}</span>
             <Image src="/chirpsIcon.png" height={20} width={20} alt="Chirps" />
           </div>
@@ -426,6 +429,13 @@ const TopBar = ({ userId }) => {
           </Button>
         </DialogPanel>
       </Dialog>
+      {/* Buy Chirps Modal */}
+      {isBuyChirpsModalOpen && (
+        <BuyChirpsModal
+          isOpen={isBuyChirpsModalOpen}
+          onClose={() => setIsBuyChirpsModalOpen(false)}
+        />
+      )}
     </>
   );
 };

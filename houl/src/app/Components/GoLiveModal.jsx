@@ -10,11 +10,16 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase";
 import ReactPlayer from "react-player";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogPanel } from "@headlessui/react";
+import { onAuthStateChanged } from "firebase/auth";
+import toast from "react-hot-toast";
+import BuyChirpsModal from "./BuyChirpsModal";
 
 const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const [serverUrlCopied, setServerUrlCopied] = useState(false);
@@ -24,24 +29,23 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   const [streamName, setStreamName] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const [streamKey, setStreamKey] = useState("");
-  // const serverUrl = "rtmp://13.234.177.100:1935/houl1/live1";
-  // const streamKey = "live1";
-
+  const [credits, setCredits] = useState(0);
+ const [isBuyChirpsModalOpen, setIsBuyChirpsModalOpen] = useState(false);
   const router = useRouter();
+
   useEffect(() => {
-    // if (isPreviewing) {
-      const userDoc = doc(db, "users", userId);
-      const unsubscribe = onSnapshot(userDoc, (doc) => {
-        // console.log("doc.data()----", doc.data());
+    const userDoc = doc(db, "users", userId);
+    const unsubscribe = onSnapshot(userDoc, (doc) => {
+      const userData = doc.data();
+      setServerUrl(userData.serverUrl);
+      setStreamKey(userData.streamKey);
+      setStreamUrl(userData.streamUrl);
+      setCredits(userData.credits || 0);
+      console.log("user creds", userData.credits);
+    });
 
-        setServerUrl(doc.data().serverUrl);
-        setStreamKey(doc.data().streamKey);
-        setStreamUrl(doc.data().streamUrl);
-      });
-
-      return () => unsubscribe();
-    // }
-  }, [ userId]);
+    return () => unsubscribe();
+  }, [userId]);
 
   const handleCopyServerUrl = () => {
     navigator.clipboard.writeText(serverUrl).then(() => {
@@ -58,6 +62,8 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
   };
 
   const handleStartStream = async () => {
+    if (credits < 9) return; // Disable button if not enough credits
+
     if (!streamName.trim()) {
       alert("Please enter a name for your stream.");
       return;
@@ -75,9 +81,12 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
         chat: [],
       });
 
-      // Update the isStreaming field in the user's document
+      // Deduct 9 credits
       const userDocRef = doc(db, "users", userId);
-      await updateDoc(userDocRef, { isStreaming: true });
+      await updateDoc(userDocRef, {
+        credits: credits - 9,
+        isStreaming: true,
+      });
 
       setIsStreaming(true);
       setIsPreviewing(false);
@@ -87,6 +96,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
       console.error("Error starting stream:", error);
     }
   };
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
@@ -154,12 +164,8 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                 className="react-player"
                 config={{
                   file: {
-                    attributes: {
-                      autoPlay: true,
-                    },
-                    hlsOptions: {
-                      startPosition: -1,
-                    },
+                    attributes: { autoPlay: true },
+                    hlsOptions: { startPosition: -1 },
                   },
                 }}
               />
@@ -170,7 +176,6 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                 className="rotate"
                 height={200}
                 width={200}
-                priority={true}
                 alt="Houl"
               />
             )}
@@ -187,9 +192,36 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
               />
             </div>
             <div className="flex w-full justify-around">
-              <Button className="bg-green-600 mb-4" onClick={handleStartStream}>
-                Start Stream
+              <Button
+                className={`mb-4 ${
+                  credits < 90
+                    ? "bg-gray-500 cursor-not-allowed"
+                    : "bg-green-600 text-white"
+                }`}
+                onClick={handleStartStream}
+                disabled={credits < 90}
+              >
+                {credits < 90 ? "Insufficient Credits" : `Start Stream for x9`}
+                {credits > 90 && (
+                  <Image
+                    src="/chirpsIcon.png"
+                    className="inline"
+                    height={15}
+                    width={15}
+                  />
+                )}
               </Button>
+              {credits < 9 && (
+                <Button
+                  className="bg-purple-700"
+                  onClick={() => {
+                    setIsBuyChirpsModalOpen(true);
+                    // onClose();
+                  }}
+                >
+                  Buy Credits
+                </Button>
+              )}
               <Button className="bg-red-600" onClick={onClose}>
                 Cancel
               </Button>
@@ -197,6 +229,15 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
           </>
         )}
       </div>
+
+      {/* Buy Chirps Modal */}
+
+      {isBuyChirpsModalOpen && (
+        <BuyChirpsModal
+          isOpen={isBuyChirpsModalOpen}
+          onClose={() => setIsBuyChirpsModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

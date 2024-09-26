@@ -42,6 +42,7 @@ import { HeartFilledIcon } from "@radix-ui/react-icons";
 import { v4 as uuidv4 } from "uuid"; // For generating unique viewer IDs
 import { number } from "zod";
 import Joyride from "react-joyride";
+import BuyChirpsModal from "@/app/Components/BuyChirpsModal";
 const StreamPage = ({ params }) => {
   const { username } = params;
   const [streamUrl, setStreamUrl] = useState(null);
@@ -1173,76 +1174,12 @@ const StreamPage = ({ params }) => {
         </DialogPanel>
       </Dialog>
       {/* Buy Chirps Modal */}
-      <Dialog
-        open={isBuyChirpsModalOpen}
-        onClose={() => setIsBuyChirpsModalOpen(false)}
-        className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-75"
-      >
-        <DialogPanel
-          className="bg-gray-900 p-8 rounded shadow-lg text-black w-[90%] max-w-md relative"
-          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
-        >
-          <h3 className="text-2xl mb-4 text-center text-white">Buy Chirps</h3>
-          <div className="space-y-4">
-            <Button
-              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(30, 30)}
-            >
-              x30
-              <Image
-                src="/chirpsIcon.png"
-                height={15}
-                width={15}
-                className="mx-1"
-                alt="Chirps"
-              />{" "}
-              Chirps for 30 INR
-            </Button>
-            <Button
-              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(80, 80)}
-            >
-              x80
-              <Image
-                src="/chirpsIcon.png"
-                height={15}
-                width={15}
-                className="mx-1"
-                alt="Chirps"
-              />{" "}
-              Chirps for 80 INR
-            </Button>{" "}
-            <Button
-              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(120, 110)}
-            >
-              x120
-              <Image
-                src="/chirpsIcon.png"
-                height={15}
-                width={15}
-                className="mx-1"
-                alt="Chirps"
-              />{" "}
-              Chirps for 110 INR
-            </Button>{" "}
-            <Button
-              className="w-full bg-purple-700 flex items-center hover:bg-purple-600 text-white"
-              onClick={() => handleBuyChirps(180, 150)}
-            >
-              x180
-              <Image
-                src="/chirpsIcon.png"
-                height={15}
-                width={15}
-                className="mx-1"
-                alt="Chirps"
-              />{" "}
-              Chirps for 150 INR
-            </Button>
-          </div>
-        </DialogPanel>
-      </Dialog>
+      {isBuyChirpsModalOpen && (
+        <BuyChirpsModal
+          isOpen={isBuyChirpsModalOpen}
+          onClose={() => setIsBuyChirpsModalOpen(false)}
+        />
+      )}
     </>
   );
 };

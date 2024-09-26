@@ -84,7 +84,7 @@ const steps = [
       <Joyride
         run={true}
         steps={steps}
-        // continuous
+        continuous
         styles={{
           options: {
             arrowColor: "#e3ffeb",
