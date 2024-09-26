@@ -208,6 +208,7 @@ const GoLiveModal = ({ onClose, userId, username, setIsStreaming }) => {
                     className="inline"
                     height={15}
                     width={15}
+                    alt="Chirps"
                   />
                 )}
               </Button>

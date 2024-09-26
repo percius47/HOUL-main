@@ -756,18 +756,18 @@ const StreamPage = ({ params }) => {
   };
 
   const steps = [
-    {
-      target: ".streamPage_Video",
-      content: "This is the Live Video area.",
-      placement: "center",
-      floaterProps: {
-        placement: "right", // Position the tooltip above the beacon
-        offset: {
-          x: 0, // No horizontal offset
-          y: 0, // Adjust the vertical offset as needed
-        },
-      },
-    },
+    // {
+    //   target: ".streamPage_Video",
+    //   content: "This is the Live Video area.",
+    //   placement: "center",
+    //   floaterProps: {
+    //     placement: "right", // Position the tooltip above the beacon
+    //     offset: {
+    //       x: 0, // No horizontal offset
+    //       y: 0, // Adjust the vertical offset as needed
+    //     },
+    //   },
+    // },
     {
       target: ".streamPage_SubscribeFollow",
       content: "You can follow or Subscribe to streamers you like from here!",
