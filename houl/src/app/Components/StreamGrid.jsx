@@ -87,24 +87,38 @@ const StreamGrid = () => {
               className="bg-gray-800 p-4 rounded-lg cursor-pointer"
               onClick={() => handleStreamClick(stream.author)}
             >
-              <ReactPlayer
-                playsinline={true}
-               
-                muted={true}
-                url={stream.streamUrl}
-                playing={true} // Auto-play the video
-                className="react-player"
-                config={{
-                  file: {
-                    attributes: {
-                      autoPlay: true, // Ensure autoPlay is set
+              {stream.type == "demo" ? (
+                <iframe
+                  className="w-[98%] mx-auto mb-1"
+                  // width="90%"
+                  // height="auto"
+                  src={stream.streamUrl}
+                  muted
+                  title="Houl Test Stream"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                ></iframe>
+              ) : (
+                <ReactPlayer
+                  playsinline={true}
+                  muted={true}
+                  url={stream.streamUrl}
+                  playing={true} // Auto-play the video
+                  className="react-player"
+                  config={{
+                    file: {
+                      attributes: {
+                        autoPlay: true, // Ensure autoPlay is set
+                      },
+                      hlsOptions: {
+                        startPosition: -1, // Automatically start at the live edge
+                      },
                     },
-                    hlsOptions: {
-                      startPosition: -1, // Automatically start at the live edge
-                    },
-                  },
-                }}
-              />
+                  }}
+                />
+              )}
               <div className="flex w-full justify-between">
                 {" "}
                 <h5 className="text-lg font-bold mb-2 text-white">
@@ -112,7 +126,7 @@ const StreamGrid = () => {
                 </h5>
                 {/* Viewer count */}
                 <span className="txt-[1rem] flex justify-between items-center sm:text-md text-red-500 ml-2">
-                  {stream?.viewers?.length||0}
+                  {stream?.viewers?.length || 0}
                   <UserIcon
                     className="text-red-400 inline fill-red-500 mx-1"
                     height={12}

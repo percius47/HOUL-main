@@ -61,7 +61,10 @@ export default function Home() {
 
   return (
     <div>
-      <TopBar username={user.email} userId={user.uid} />
+      <TopBar
+        
+        userId={user.uid}
+      />
       <StreamGrid userId={user.uid} />
     </div>
   );

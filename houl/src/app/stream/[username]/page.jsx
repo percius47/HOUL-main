@@ -62,7 +62,7 @@ const StreamPage = ({ params }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [viewerCount, setViewerCount] = useState(0); // Live viewer count
-
+  const [streamType, setStreamType] = useState(null);
   const viewerId = uuidv4(); // Generate a unique ID for the viewer
 
   useEffect(() => {
@@ -114,6 +114,7 @@ const StreamPage = ({ params }) => {
         setStreamUrl(streamData.streamUrl);
         setStreamName(streamData.streamName);
         setStreamTime(streamData.streamStartedAt);
+        setStreamType(streamData.type);
         setLikes(streamData.likes);
         setDislikes(streamData.dislikes || 0);
         setHasLiked(streamData.likedBy?.includes(user?.uid));
@@ -425,26 +426,6 @@ const StreamPage = ({ params }) => {
     }
   };
 
-  const handleDislike = async () => {
-    const streamsQuery = query(
-      collection(db, "streams"),
-      where("author", "==", username)
-    );
-
-    const streamSnapshot = await getDocs(streamsQuery);
-    if (!streamSnapshot.empty) {
-      const streamDocRef = streamSnapshot.docs[0].ref;
-      const updateAction = hasDisliked
-        ? arrayRemove(user.uid)
-        : arrayUnion(user.uid);
-
-      await updateDoc(streamDocRef, {
-        dislikedBy: updateAction,
-        dislikes: hasDisliked ? dislikes - 1 : dislikes + 1,
-      });
-    }
-  };
-
   //useEffect for checking new chirp activity
   useEffect(() => {
     if (!username) return;
@@ -501,7 +482,6 @@ const StreamPage = ({ params }) => {
     return () => unsubscribe(); // Cleanup subscription on component unmount
   }, [username]);
 
-  // Handle sending chirps modal logic
   // const handleSendChirps = async () => {
   //   if (viewerCredits < chirpsAmount) {
   //     toast.error(
@@ -658,43 +638,6 @@ const StreamPage = ({ params }) => {
       setMessageInput(""); // Reset input after sending
     }
   };
-
-  // const handleSendMessage = async (messageType, chirpAmount) => {
-  //   if (!messageInput.trim()) return;
-
-  //   const streamsQuery = query(
-  //     collection(db, "streams"),
-  //     where("author", "==", username)
-  //   );
-
-  //   const streamSnapshot = await getDocs(streamsQuery);
-  //   console.log("streamSnapp", streamSnapshot);
-
-  //   if (!streamSnapshot.empty) {
-  //     const streamDocRef = streamSnapshot.docs[0].ref;
-
-  //     const userDocRef = doc(db, "users", user.uid);
-  //     const userDoc = await getDoc(userDocRef);
-  //     const chatAuthor = userDoc.exists()
-  //       ? userDoc.data().username
-  //       : "Anonymous";
-
-  //     const newMessage = {
-  //       chatAuthor: chatAuthor,
-  //       message: messageInput,
-  //       chatTimestamp: new Date(),
-  //       messageType: messageType === "chirp" ? "chirp" : "normal",
-  //       chirpAmount: messageType === "chirp" ? `${chirpAmount}` : 0,
-  //       // photoUrl: user.photoUrl || "https://github.com/shadcn.png",
-  //     };
-
-  //     await updateDoc(streamDocRef, {
-  //       chat: arrayUnion(newMessage),
-  //     });
-
-  //     setMessageInput("");
-  //   }
-  // };
 
   const handleDeleteMessage = async (messageToDelete) => {
     try {
@@ -867,28 +810,42 @@ const StreamPage = ({ params }) => {
         <div className="w-full lg:w-[70%] mb-4 lg:mb-0 lg:pr-4 relative">
           {streamUrl ? (
             <div className="relative">
-              <ReactPlayer
-                url={streamUrl}
-                playing={true}
-                controls
-                autoPlay={true}
-                playsinline={true}
-                className="react-player"
-                width="100%"
-                height="auto"
-                style={{ maxHeight: "75vh" }}
-                config={{
-                  file: {
-                    attributes: {
-                      autoPlay: true,
-                      playsInline: true,
+              {streamType == "demo" ? (
+                <iframe
+                  className="w-[98%] mx-auto mb-1 h-[60vh]"
+                  // width="90%"
+                  height="auto"
+                  src={streamUrl}
+                  title="Houl Demo Stream"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen
+                ></iframe>
+              ) : (
+                <ReactPlayer
+                  url={streamUrl}
+                  playing={true}
+                  controls
+                  autoPlay={true}
+                  playsinline={true}
+                  className="react-player"
+                  width="100%"
+                  height="auto"
+                  style={{ maxHeight: "75vh" }}
+                  config={{
+                    file: {
+                      attributes: {
+                        autoPlay: true,
+                        playsInline: true,
+                      },
+                      hlsOptions: {
+                        startPosition: -1,
+                      },
                     },
-                    hlsOptions: {
-                      startPosition: -1,
-                    },
-                  },
-                }}
-              />
+                  }}
+                />
+              )}
               <div className="flex justify-between items-center mt-2 py-1">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl  font-bold text-white ">
                   {streamName}

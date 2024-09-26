@@ -9,9 +9,11 @@ import {
 } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { auth } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase"; // Import Firebase DB
+import { doc, setDoc, getDoc } from "firebase/firestore"; // Firestore methods
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
 const Login = ({ onLogin }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -21,8 +23,28 @@ const Login = ({ onLogin }) => {
 
   const handleLogin = async (user) => {
     const token = await user.getIdToken();
-    localStorage.setItem("firebaseToken", token); // Save the token to localStorage
-    // onLogin(user);
+    localStorage.setItem("firebaseToken", token);
+
+    const userDoc = doc(db, "users", user.uid);
+    const docSnap = await getDoc(userDoc);
+
+    // Check if Firestore user document already exists, if not create it
+    if (!docSnap.exists()) {
+      await setDoc(userDoc, {
+        username: user.email.match(/^([^@]+)/)[0],
+        isStreaming: false,
+        subscribers: 0,
+        photoUrl: user?.photoURL || null,
+        credits: 100,
+        channelCreated: false,
+        serverUrl: "rtmp://13.234.177.100:1935/houl1/live1", //default channel
+        streamKey: "live1", //default key
+        streamUrl:
+          "https://f53112b70bc31005.mediapackage.ap-south-1.amazonaws.com/out/v1/800c429a166b4c87afc03c4e6f2cac44/index.m3u8", // default streamUrl
+      });
+    }
+
+    // Redirect to the homepage after ensuring the document is created
     router.push("/");
   };
 
@@ -30,27 +52,12 @@ const Login = ({ onLogin }) => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      handleLogin(result.user);
+      await handleLogin(result.user); // Ensure Firestore document is created before redirect
     } catch (err) {
       setError(err.message);
     }
   };
-  const handleGuestLogin = async (e) => {
-    e.preventDefault();
-    try {
-      let userCredential;
 
-      userCredential = await signInWithEmailAndPassword(
-        auth,
-        "guest@a.com",
-        "111111"
-      );
-
-      handleLogin(userCredential.user);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
   const handleEmailPasswordAuth = async (e) => {
     e.preventDefault();
     try {
@@ -68,7 +75,7 @@ const Login = ({ onLogin }) => {
           password
         );
       }
-      handleLogin(userCredential.user);
+      await handleLogin(userCredential.user); // Ensure Firestore document is created before redirect
     } catch (err) {
       setError(err.message);
     }
@@ -87,17 +94,12 @@ const Login = ({ onLogin }) => {
         <h1 className="my-3 text-7xl font-bold text-purple-700">Houl</h1>
       </div>
 
-      {/* <h2 className="mb-4 text-2xl font-bold">
-        {isSignUp ? "Sign Up" : "Login"}
-      </h2> */}
-
       <form
         onSubmit={handleEmailPasswordAuth}
         className="w-full max-w-sm space-y-4"
       >
         <Input
           type="email"
-          label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
@@ -105,7 +107,6 @@ const Login = ({ onLogin }) => {
         />
         <Input
           type="password"
-          label="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
@@ -120,6 +121,7 @@ const Login = ({ onLogin }) => {
       </form>
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
+
       <Button
         className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
         onClick={handleGoogleLogin}
@@ -127,12 +129,7 @@ const Login = ({ onLogin }) => {
         <Image src="/googleLogo.png" width={40} height={40} alt="Google" />
         {isSignUp ? "Sign Up with Google" : "Sign in with Google"}
       </Button>
-      {/* <Button
-        className="bg-white text-purple-800 mt-4 w-[24rem] text-lg"
-        onClick={handleGuestLogin}
-      >
-        Login as Guest
-      </Button> */}
+
       <p className="mt-4">
         {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
         <Button
