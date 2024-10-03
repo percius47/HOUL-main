@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PiSignOutBold } from "react-icons/pi";
 import GoLiveModal from "./GoLiveModal";
 import { Dialog, DialogPanel } from "@headlessui/react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   doc,
   onSnapshot,
@@ -23,9 +24,16 @@ import { auth, db, storage } from "../firebase/firebase"; // Import storage from
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // For Firebase Storage
 import { signOut } from "firebase/auth";
 import Image from "next/image";
+import {
+  BrowserView,
+  MobileView,
+  isBrowser,
+  isMobile,
+} from "react-device-detect";
 import { MdEdit } from "react-icons/md";
 import { Upload, X } from "lucide-react"; // X icon for undo changes
 import BuyChirpsModal from "./BuyChirpsModal";
+import { PlusIcon } from "@radix-ui/react-icons";
 
 const TopBar = ({ userId }) => {
   const [showModal, setShowModal] = useState(false);
@@ -260,7 +268,7 @@ const TopBar = ({ userId }) => {
         {/* Right Side - Profile Picture and Go Live/Stop Stream Button */}
         <div className="flex items-center space-x-4">
           {channelCreated ? (
-            <>
+            <BrowserView>
               {isStreaming ? (
                 <Button
                   className="bg-red-600 topbar_StreamControlButton"
@@ -276,7 +284,7 @@ const TopBar = ({ userId }) => {
                   Go Live
                 </Button>
               )}
-            </>
+            </BrowserView>
           ) : (
             <Button
               onClick={createIVSChannelHandler}
@@ -290,9 +298,9 @@ const TopBar = ({ userId }) => {
           {profilePicture && (
             <Image
               src={profilePicture || "https://github.com/shadcn.png"}
-              height={36}
-              width={36}
-              className="h-9 w-9 rounded-full cursor-pointer topbar_profilePicture"
+              height={45}
+              width={45}
+              className="h-12 w-12 rounded-full cursor-pointer topbar_profilePicture"
               alt="Profile Picture"
               onError={(e) => (e.target.src = "https://github.com/shadcn.png")}
               onClick={() => setIsProfileModalOpen(true)} // Open profile modal on click
@@ -300,7 +308,6 @@ const TopBar = ({ userId }) => {
           )}
         </div>
       </header>
-
       {/* Go Live Modal */}
       {showModal && (
         <GoLiveModal
@@ -310,7 +317,6 @@ const TopBar = ({ userId }) => {
           setIsStreaming={setIsStreaming}
         />
       )}
-
       {/* Profile Info Modal */}
       <Dialog
         open={isProfileModalOpen}
@@ -329,14 +335,37 @@ const TopBar = ({ userId }) => {
             />
           </div>
           <span className="text-center text-[0.95rem]">@{username}</span>
-
           {/* Credits */}
-          <div className="flex justify-center items-center text-lg cursor-pointer"onClick={() => {
-                    setIsBuyChirpsModalOpen(true);}}>
-            <span className="mr-2"> {credits}</span>
-            <Image src="/chirpsIcon.png" height={20} width={20} alt="Chirps" />
-          </div>
-
+          <Tooltip.Provider delayDuration={1000}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <div
+                  className="flex justify-center items-center text-lg cursor-pointer"
+                  onClick={() => {
+                    setIsBuyChirpsModalOpen(true);
+                  }}
+                >
+                  <span className="mr-2"> {credits}</span>
+                  <Image
+                    src="/chirpsIcon.png"
+                    height={20}
+                    width={20}
+                    alt="Chirps"
+                  />
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="bg-gray-400 bg-opacity-55 p-1 rounded z-50 text-sm"
+                  sideOffset={5}
+                  side="right"
+                >
+                  Buy more Credits
+                  <Tooltip.Arrow className="fill-gray-500 fill-opacity-25 gray-500" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
           {/* Buttons */}
           <div
             className="bg-blue-800 w-[50%] text-center text-[0.8rem] mx-auto rounded my-1 cursor-pointer p-1"
@@ -354,7 +383,6 @@ const TopBar = ({ userId }) => {
           </div>
         </DialogPanel>
       </Dialog>
-
       {/* Edit Profile Modal */}
       <Dialog
         open={isEditProfileOpen}

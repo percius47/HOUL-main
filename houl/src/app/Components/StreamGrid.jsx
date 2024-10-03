@@ -89,10 +89,10 @@ const StreamGrid = () => {
             >
               {stream.type == "demo" ? (
                 <iframe
-                  className="w-[373px] h-[209px] mx-auto mb-1"
+                  className="max-w-[95%] w-[373px] h-[209px] mx-auto mb-1 "
                   // width="90%"
                   // height="auto"
-                  src={stream.streamUrl}
+                  src={`${stream.streamUrl}&mute=1&controls=0&rel=0`}
                   muted
                   title="Houl Test Stream"
                   frameborder="0"

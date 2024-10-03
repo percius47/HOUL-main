@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { auth, db } from "../../firebase/firebase";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   collection,
   query,
@@ -369,7 +370,7 @@ const StreamPage = ({ params }) => {
   // Handle subscribe logic
   const handleSubscribe = async () => {
     if (viewerCredits < 25) {
-      toast.error(`Get more credits to subscribe to ${username}`, {
+      toast.error(`Insufficient credits to subscribe to ${username}`, {
         position: "top-center",
       });
       return;
@@ -502,7 +503,7 @@ const StreamPage = ({ params }) => {
       return;
     }
 
-    const viewerDocRef = doc(db, "users", user.uid);
+    const viewerDocRef = doc(db, "users", user.uid); // Viewer document reference
     const streamsQuery = query(
       collection(db, "streams"),
       where("author", "==", username)
@@ -520,6 +521,8 @@ const StreamPage = ({ params }) => {
       const streamSnapshot = await getDocs(streamsQuery);
       if (!streamSnapshot.empty) {
         const streamDocRef = streamSnapshot.docs[0].ref;
+        const streamData = streamSnapshot.docs[0].data();
+        const authorUsername = streamData.author;
 
         // Add chirps event to Firestore
         const newChirpEvent = {
@@ -552,7 +555,18 @@ const StreamPage = ({ params }) => {
           });
         }
 
-        // Centralized toast logic: Show toast for chirps trigger from useEffect
+        // Add chirpsAmount to the author's credits
+        const authorDocRef = doc(db, "users", authorId); // Reference to author's document
+        const authorDoc = await getDoc(authorDocRef);
+
+        if (authorDoc.exists()) {
+          const authorCredits = authorDoc.data().credits || 0;
+
+          // Update the author's credits
+          await updateDoc(authorDocRef, {
+            credits: authorCredits + chirpsAmount,
+          });
+        }
 
         setIsChirpsModalOpen(false);
         setMessageInput(""); // Reset input after sending
@@ -756,37 +770,38 @@ const StreamPage = ({ params }) => {
   };
 
   const steps = [
-    // {
-    //   target: ".streamPage_Video",
-    //   content: "This is the Live Video area.",
-    //   placement: "center",
-    //   floaterProps: {
-    //     placement: "right", // Position the tooltip above the beacon
-    //     offset: {
-    //       x: 0, // No horizontal offset
-    //       y: 0, // Adjust the vertical offset as needed
-    //     },
-    //   },
-    // },
+    {
+      target: ".streamPage_Video",
+      content: "This is the Live Video area.",
+      placement: "center",
+      floaterProps: {
+        placement: "right", // Position the tooltip above the beacon
+        offset: {
+          x: 0, // No horizontal offset
+          y: 0, // Adjust the vertical offset as needed
+        },
+      },
+    },
     {
       target: ".streamPage_SubscribeFollow",
       content: "You can follow or Subscribe to streamers you like from here!",
-    },
-    {
-      target: ".streamPage_Chat",
-      content: "This is the Chat Section",
-      placement: "left",
-    },
-    {
-      target: ".streamPage_ChatWindow",
-      content: "This is Live Chat.",
-      placement: "left",
-    },
-    {
-      target: ".streamPage_ChatInput",
-      content: "This is Live Chat Input Field.",
       placement: "top",
     },
+    // {
+    //   target: ".streamPage_Chat",
+    //   content: "This is the Chat Section",
+    //   placement: "left",
+    // },
+    // {
+    //   target: ".streamPage_ChatWindow",
+    //   content: "This is Live Chat.",
+    //   placement: "left",
+    // },
+    // {
+    //   target: ".streamPage_ChatInput",
+    //   content: "This is Live Chat Input Field.",
+    //   placement: "top",
+    // },
     {
       target: ".streamPage_ChatCredits",
       content:
@@ -795,8 +810,7 @@ const StreamPage = ({ params }) => {
     },
     {
       target: ".streamPage_rerunGuide",
-      content:
-        "Re-run Guide",
+      content: "Re-run Guide",
       placement: "left",
     },
   ];
@@ -857,6 +871,7 @@ const StreamPage = ({ params }) => {
             style: {
               background: "#d51e1e",
               bottom: 0,
+              color: "white",
             },
           },
         }}
@@ -871,7 +886,8 @@ const StreamPage = ({ params }) => {
                   // width="90%"
                   height="auto"
                   muted="false"
-                  src={`${streamUrl}&amp;mute=1`}
+                  // src={`${streamUrl}&rel=0&mute=0`}
+                  src="https://www.youtube.com/embed/7LzXH6mHZ0U?autoplay=1&rel=0&mute=0&controls=1"
                   title="Houl Demo Stream"
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -942,7 +958,7 @@ const StreamPage = ({ params }) => {
                 </div>
 
                 {viewerUsername !== username && (
-                  <div className="flex items-center space-x-2 mt-2 sm:mt-0 streamPage_SubscribeFollow">
+                  <div className="streamPage_SubscribeFollow flex items-center space-x-2 mt-2 sm:mt-0 ">
                     <div
                       onClick={isFollowing ? handleUnfollow : handleFollow}
                       className={`rounded flex  items-center p-1 cursor-pointer ${
@@ -1022,45 +1038,66 @@ const StreamPage = ({ params }) => {
                       : ""
                   } hover:bg-gray-900 pt-1 group`}
                 >
-                  <div className={`w-full flex  items-center`}>
-                    <span
-                      className={`text-[0.75rem] ${
-                        msg.messageType == "chirp"
-                          ? "text-gray-400"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {formatTimestamp(msg.chatTimestamp)}
+                  <div className={`w-full flex  text-wrap`}>
+                    <p className="text-[0.75rem] mr-1 inline w-[90%]">
+                      <span
+                        className={`text-[0.7rem] text-center my-auto mr-1 ${
+                          msg.messageType == "chirp"
+                            ? "text-gray-400"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {formatTimestamp(msg.chatTimestamp)}
+                      </span>
+                      {/* <div className="text-white flex ml-[0.5rem] w-[80%]"> */}
+
+                      {/* <p className="text-[0.75rem] mr-1 inline"> */}
+                      <strong className="text-[0.75rem] mr-1 inline">
+                        {msg.chatAuthor}:
+                      </strong>
+
+                      {msg.message}
+                    </p>
+
+                    {/* </div> */}
+                    {/* chirps amount banner */}
+                    <span className="flex items-center font-light  text-[0.6rem] text-gray-300 ">
+                      {msg.messageType === "chirp" && `x${msg?.chirpAmount}`}
+                      {msg.messageType === "chirp" && (
+                        <Image
+                          src="/chirpsIcon.png"
+                          height={8}
+                          width={8}
+                          className="ml-[1px]"
+                          alt="Chirps"
+                        />
+                      )}
                     </span>
-                    <div className="text-white ml-[0.5rem] w-[80%]">
-                      <div className="flex items-center justify-between w-full">
-                        <p className="text-[0.75rem]">
-                          <strong>{msg.chatAuthor}</strong>: {msg.message}
-                        </p>
-                        <span className="flex items-center font-light  text-[0.6rem] text-gray-300 ">
-                          {msg.messageType === "chirp" &&
-                            `x${msg?.chirpAmount}`}
-                          {msg.messageType === "chirp" && (
-                            <Image
-                              src="/chirpsIcon.png"
-                              height={8}
-                              width={8}
-                              className="ml-[1px]"
-                              alt="Chirps"
-                            />
-                          )}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                   {(msg.chatAuthor === viewerUsername ||
                     username === viewerUsername) && (
-                    <button
-                      className="text-red-500 text-xl absolute right-0 hidden group-hover:block bg-gradient-to-r from-slate-700  to-gray-800 rounded-r-[0.125rem] bg-opacity-1 h-full pl-1"
-                      onClick={() => handleDeleteMessage(msg)}
-                    >
-                      <MdDelete className="text-red-700 items-center mx-2 " />
-                    </button>
+                    <Tooltip.Provider delayDuration={1000}>
+                      <Tooltip.Root>
+                        <Tooltip.Trigger asChild>
+                          <button
+                            className="text-red-500 text-xl absolute right-0 hidden group-hover:block bg-gradient-to-r from-slate-700  to-gray-800 rounded-r-[0.125rem] bg-opacity-1 h-full pl-1"
+                            onClick={() => handleDeleteMessage(msg)}
+                          >
+                            <MdDelete className="text-red-700 items-center mx-2 " />
+                          </button>
+                        </Tooltip.Trigger>
+                        <Tooltip.Portal>
+                          <Tooltip.Content
+                            className="bg-gray-400 bg-opacity-55 p-1 rounded z-50 text-[0.6rem]"
+                            sideOffset={5}
+                            side="bottom"
+                          >
+                            <span>Delete your Comment</span>
+                            <Tooltip.Arrow className="fill-gray-500 fill-opacity-25 gray-500" />
+                          </Tooltip.Content>
+                        </Tooltip.Portal>
+                      </Tooltip.Root>
+                    </Tooltip.Provider>
                   )}
                 </div>
               ))
@@ -1138,8 +1175,12 @@ const StreamPage = ({ params }) => {
                 min={5}
                 max={viewerCredits}
                 value={chirpsAmount}
-                className=" bg-transparent text-center w-[2vw]"
-                onChange={(e) => setChirpsAmount(Number(e.target.value))}
+                className=" bg-transparent text-center min-w-[2.5vw] w-[2vw]"
+                onChange={(e) =>
+                  Number(e.target.value) <= chirpsAmount
+                    ? setChirpsAmount(Number(e.target.value))
+                    : 0
+                }
               />
               <p className="text-center ml-[0.25rem]">Chirps</p>
             </div>
@@ -1147,23 +1188,27 @@ const StreamPage = ({ params }) => {
 
           <input
             placeholder="Message available at x30 chirps!"
-            value={chirpsMessage}
+            value={chirpsAmount >= 30 ? chirpsMessage : ""}
             onChange={(e) => {
               setChirpsMessage(e.target.value);
               setMessageInput(e.target.value);
             }}
             disabled={chirpsAmount >= 30 ? false : true}
-            className="w-full p-2 rounded bg-gray-700 text-white disabled:bg-gray-600"
+            className="w-full p-1 xl:p-2 rounded bg-gray-700 text-white disabled:bg-gray-600 text-[0.8rem] xl:text-base"
           />
-
+          {chirpsAmount <= 30 && (
+            <p className="text-sm text-red-600 italic">
+              Cannot send message if chirps amount is less than 30
+            </p>
+          )}
           <Button
-            className="w-full mt-4 bg-green-600"
+            className="w-full xl:w-[50%] xl:mx-auto mt-4 bg-green-600 font-bold text-yellow-100"
             onClick={handleSendChirps}
           >
             Send Chirps
           </Button>
           <Button
-            className="w-full mt-4 bg-purple-950 text-white"
+            className="w-full xl:w-[50%] xl:mx-auto mt-4 bg-purple-950 text-white"
             onClick={() => {
               setIsChirpsModalOpen(false);
               setIsBuyChirpsModalOpen(true);

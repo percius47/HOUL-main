@@ -72,12 +72,12 @@ const steps = [
     target: ".topbar_StreamControlButton",
     content: "Start / Stop your Ongoing Stream from here.",
   },
-  {
-    target: ".stream_grid",
-    content:
-      "This is the area where all Live Streams Appear, Click on any of them to start watching!",
-    placement: "top",
-  },
+  // {
+  //   target: ".stream_grid",
+  //   content:
+  //     "This is the area where all Live Streams Appear, Click on any of them to start watching!",
+  //   placement: "top",
+  // },
 ];
   return (
     <div>
