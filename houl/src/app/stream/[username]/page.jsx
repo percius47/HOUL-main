@@ -1169,13 +1169,13 @@ const StreamPage = ({ params }) => {
               Minimum 5 chirps required.
             </p>
           ) : (
-            <div className="flex justify-between max-w-[40%] items-center mx-auto mb-2 mt-4">
+            <div className="flex justify-between items-center mx-auto mb-2 mt-4">
               <input
                 type="number"
                 min={5}
                 max={viewerCredits}
                 value={chirpsAmount}
-                className=" bg-transparent text-center min-w-[2.5vw] w-[2vw]"
+                className=" bg-transparent text-center min-w-[2.5vw] w-[7vw] md:w-[3vw] "
                 onChange={(e) =>
                   Number(e.target.value) <= chirpsAmount
                     ? setChirpsAmount(Number(e.target.value))
@@ -1202,13 +1202,13 @@ const StreamPage = ({ params }) => {
             </p>
           )}
           <Button
-            className="w-full xl:w-[50%] xl:mx-auto mt-4 bg-green-600 font-bold text-yellow-100"
+            className="w-full md:w-[50%] md:mx-auto mt-4 bg-green-600 font-bold text-yellow-100"
             onClick={handleSendChirps}
           >
             Send Chirps
           </Button>
           <Button
-            className="w-full xl:w-[50%] xl:mx-auto mt-4 bg-purple-950 text-white"
+            className="w-full md:w-[50%] md:mx-auto mt-4 bg-purple-950 text-white"
             onClick={() => {
               setIsChirpsModalOpen(false);
               setIsBuyChirpsModalOpen(true);
