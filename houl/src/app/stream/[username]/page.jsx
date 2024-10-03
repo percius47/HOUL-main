@@ -44,6 +44,7 @@ import { v4 as uuidv4 } from "uuid"; // For generating unique viewer IDs
 import { number } from "zod";
 import Joyride from "react-joyride";
 import BuyChirpsModal from "@/app/Components/BuyChirpsModal";
+import { isMobile } from "react-device-detect";
 const StreamPage = ({ params }) => {
   const { username } = params;
   const [streamUrl, setStreamUrl] = useState(null);
@@ -885,7 +886,8 @@ const StreamPage = ({ params }) => {
                   className="w-[98%] mx-auto mb-1 h-[60vh]"
                   // width="90%"
                   height="auto"
-                  src={`${streamUrl}&rel=0&mute=0`}
+                  src={`${streamUrl}&rel=0&mute=1`}
+                  // src="https://www.youtube.com/embed/ri-0YCf_rTw?si=fkmWXrOK7wA5oZum&autoplay=true"
                   title="Houl Demo Stream"
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
