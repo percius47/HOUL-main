@@ -885,9 +885,7 @@ const StreamPage = ({ params }) => {
                   className="w-[98%] mx-auto mb-1 h-[60vh]"
                   // width="90%"
                   height="auto"
-                  muted="false"
-                  // src={`${streamUrl}&rel=0&mute=0`}
-                  src="https://www.youtube.com/embed/7LzXH6mHZ0U?autoplay=1&rel=0&mute=0&controls=1"
+                  src={`${streamUrl}&rel=0&mute=0`}
                   title="Houl Demo Stream"
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -974,9 +972,11 @@ const StreamPage = ({ params }) => {
                       className={`flex rounded pl-2 pr-1  items-center text-white cursor-pointer ${
                         isSubscribed ? "bg-green-600" : "bg-purple-600 "
                       }`}
-                      onClick={
-                        isSubscribed ? handleUnsubscribe : handleSubscribe
-                      }
+                      onClick={() => {
+                        isSubscribed
+                          ? toast.success("Already Subscribed!")
+                          : handleSubscribe();
+                      }}
                     >
                       <span className="pr-2 py-1">
                         {isSubscribed ? "Subscribed" : "Subscribe"}
