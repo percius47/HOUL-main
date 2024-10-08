@@ -30,35 +30,41 @@ const StreamGrid = () => {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const calculateTimeElapsed = () => {
-      const currentTimes = {};
+useEffect(() => {
+  const calculateTimeElapsed = () => {
+    const currentTimes = {};
 
-      streams.forEach((stream) => {
-        const timeDifference = Date.now() - stream.streamStartedAt;
-        const minutes = Math.floor(timeDifference / (1000 * 60));
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = minutes % 60;
+    streams.forEach((stream) => {
+      const timeDifference = Date.now() - stream.streamStartedAt;
+      const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor(
+        (timeDifference % (1000 * 60 * 60)) / (1000 * 60)
+      );
 
-        if (minutes < 2) {
-          currentTimes[stream.id] = "Started now";
-        } else if (hours > 0) {
-          currentTimes[
-            stream.id
-          ] = `Started ${hours} hr ${remainingMinutes} min ago`;
-        } else {
-          currentTimes[stream.id] = `Started ${remainingMinutes} min ago`;
-        }
-      });
-      setTimeElapsed(currentTimes);
-    };
+      if (minutes < 2 && hours === 0 && days === 0) {
+        currentTimes[stream.id] = "Started now";
+      } else if (days > 0) {
+        currentTimes[stream.id] = `Started ${days}d ${hours}h ${minutes}m ago`;
+      } else if (hours > 0) {
+        currentTimes[stream.id] = `Started ${hours}h ${minutes}m ago`;
+      } else {
+        currentTimes[stream.id] = `Started ${minutes}m ago`;
+      }
+    });
 
-    // Calculate the time immediately and then every 2 minutes
-    calculateTimeElapsed();
-    const intervalId = setInterval(calculateTimeElapsed, 2000);
+    setTimeElapsed(currentTimes);
+  };
 
-    return () => clearInterval(intervalId);
-  }, [streams]);
+  // Calculate the time immediately and then every 2 minutes
+  calculateTimeElapsed();
+  const intervalId = setInterval(calculateTimeElapsed, 120000); // Update every 2 minutes
+
+  return () => clearInterval(intervalId);
+}, [streams]);
+
 
   const handleStreamClick = (username) => {
     router.push(`/stream/${username}`);

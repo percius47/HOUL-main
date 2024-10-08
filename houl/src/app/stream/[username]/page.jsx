@@ -145,21 +145,27 @@ const StreamPage = ({ params }) => {
 
     const calculateTimeElapsed = () => {
       const diff = Date.now() - streamTime;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
       setTimeElapsed(
-        `${hours > 0 ? hours + "h " : ""}${minutes > 0 ? minutes + "m " : ""}
-        ${seconds > 0 ? seconds + "s ago" : "now"}`
+        `${days > 0 ? days + "d " : ""}${hours > 0 ? hours + "h " : ""}${
+          minutes > 0 ? minutes + "m ago" : "now"
+        }`
+      //  `${seconds > 0 ? seconds + "s ago" : "now"}`
       );
     };
 
     calculateTimeElapsed();
-    const intervalId = setInterval(calculateTimeElapsed, 300000);
+    const intervalId = setInterval(calculateTimeElapsed, 120000); // Refresh every second to include seconds
 
     return () => clearInterval(intervalId);
   }, [streamTime]);
+
 
   // Track viewer joining
   useEffect(() => {
