@@ -108,7 +108,7 @@ useEffect(() => {
                 ></iframe>
               ) : (
                 <ReactPlayer
-                  playsinline={true}
+                  playsinline={true}  
                   muted={true}
                   url={stream.streamUrl}
                   playing={true} // Auto-play the video

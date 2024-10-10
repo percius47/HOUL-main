@@ -947,7 +947,7 @@ const StreamPage = ({ params }) => {
             />
           )}
         </div>
-{/* Chat Section */}
+        {/* Chat Section */}
         <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative streamPage_Chat">
           <h2 className="text-xl font-bold text-white ml-2">Live Chat</h2>
           <div
@@ -1112,11 +1112,13 @@ const StreamPage = ({ params }) => {
                 max={viewerCredits}
                 value={chirpsAmount}
                 className=" bg-transparent text-center min-w-[2.5vw] w-[7vw] md:w-[3vw] "
-                onChange={(e) =>
-                  Number(e.target.value) <= chirpsAmount
-                    ? setChirpsAmount(Number(e.target.value))
-                    : 0
-                }
+                onChange={(e) => {
+                  if (Number(e.target.value) < 5) {
+                    setChirpsAmount(5);
+                  } else if (Number(e.target.value) <= viewerCredits) {
+                    setChirpsAmount(Number(e.target.value));
+                  } else setChirpsAmount(viewerCredits);
+                }}
               />
               <p className="text-center ml-[0.25rem]">Chirps</p>
             </div>
