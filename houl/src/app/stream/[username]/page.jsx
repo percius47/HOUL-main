@@ -1204,9 +1204,9 @@ const StreamPage = ({ params }) => {
             disabled={chirpsAmount >= 30 ? false : true}
             className="w-full p-1 xl:p-2 rounded bg-gray-700 text-white disabled:bg-gray-600 text-[0.8rem] xl:text-base"
           />
-          {chirpsAmount <= 30 && (
+          {chirpsAmount < 30 && (
             <p className="text-sm text-red-600 italic">
-              Cannot send message if chirps amount is less than 30
+              Cannot send message if chirps amount is less than 30!
             </p>
           )}
           <Button
