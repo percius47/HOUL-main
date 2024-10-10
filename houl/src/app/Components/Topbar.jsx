@@ -286,13 +286,15 @@ const TopBar = ({ userId }) => {
               )}
             </BrowserView>
           ) : (
-            <Button
-              onClick={createIVSChannelHandler}
-              // disabled={!user || loading}
-              className="bg-blue-600 text-white p-2 rounded topbar_createChannelButton"
-            >
-              {loading ? "Creating Channel..." : "Create Channel"}
-            </Button>
+            <BrowserView>
+              <Button
+                onClick={createIVSChannelHandler}
+                // disabled={!user || loading}
+                className="bg-blue-600 text-white p-2 rounded topbar_createChannelButton"
+              >
+                {loading ? "Creating Channel..." : "Create Channel"}
+              </Button>
+            </BrowserView>
           )}
           {/* Profile Picture */}
           {profilePicture && (

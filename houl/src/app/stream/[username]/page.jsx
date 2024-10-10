@@ -45,6 +45,7 @@ import { number } from "zod";
 import Joyride from "react-joyride";
 import BuyChirpsModal from "@/app/Components/BuyChirpsModal";
 import { isMobile } from "react-device-detect";
+import { useRouter } from "next/navigation";
 const StreamPage = ({ params }) => {
   const { username } = params;
   const [streamUrl, setStreamUrl] = useState(null);
@@ -75,27 +76,34 @@ const StreamPage = ({ params }) => {
   const [firstGuideRun, setFirstGuideRun] = useState(true); // First run when page loads
   const [runGuide, setRunGuide] = useState(false); // For subsequent runs
   const viewerId = uuidv4(); // Generate a unique ID for the viewer
+  const router = useRouter(); // Initialize useRouter
 
+  // Highlighted: New authentication check and redirect logic
   useEffect(() => {
-    // Monitor user authentication status
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        // Fetch viewer's username and credits after setting the user
         await fetchViewerData(currentUser.uid);
       } else {
-        setUser(null);
+        // Store the intended URL in local storage
+        localStorage.setItem("redirectUrl", window.location.pathname);
+        router.push("/auth"); // Redirect to auth page
       }
     });
 
     return () => unsubscribeAuth();
-  }, []);
+  }, [router]);
+
+   // Highlighted: Retrieve redirect URL after login
+ //If any user comes directly to this page without account creation, user is directed towards auth page and once thay login successfully, they are redirected to this page.
+
   //sets range to 0 on buy chirps modal
   useEffect(() => {
     if (isChirpsModalOpen) {
       setChirpsAmount(viewerCredits); // Reset chirps amount to 0 when the modal is opened
     }
   }, [isChirpsModalOpen]);
+
   const fetchViewerData = async (uid) => {
     try {
       const userDocRef = doc(db, "users", uid);
@@ -132,6 +140,8 @@ const StreamPage = ({ params }) => {
         setHasDisliked(streamData.dislikedBy?.includes(user?.uid));
         setChatMessages(streamData.chat || []);
         setViewerCount(streamData.viewerCount || 0); // Initialize viewer count
+      } else {
+        router.push("/"); // Redirect to home page if stream not found
       }
     });
 
@@ -156,7 +166,7 @@ const StreamPage = ({ params }) => {
         `${days > 0 ? days + "d " : ""}${hours > 0 ? hours + "h " : ""}${
           minutes > 0 ? minutes + "m ago" : "now"
         }`
-      //  `${seconds > 0 ? seconds + "s ago" : "now"}`
+        //  `${seconds > 0 ? seconds + "s ago" : "now"}`
       );
     };
 
@@ -165,7 +175,6 @@ const StreamPage = ({ params }) => {
 
     return () => clearInterval(intervalId);
   }, [streamTime]);
-
 
   // Track viewer joining
   useEffect(() => {
@@ -309,6 +318,7 @@ const StreamPage = ({ params }) => {
     const fetchUserData = async () => {
       //fetching streamer data
       const authorUid = await fetchAuthorUid(username);
+      if(authorId!==null){
       setAuthorId(authorUid);
 
       const userDocRef = doc(db, "users", authorUid);
@@ -329,7 +339,7 @@ const StreamPage = ({ params }) => {
             ? userData.subscribers.includes(user.uid)
             : false
         );
-      }
+      }}  
     };
 
     fetchUserData();
@@ -654,101 +664,6 @@ const StreamPage = ({ params }) => {
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => {
-        resolve(true);
-      };
-      script.onerror = () => {
-        resolve(false);
-      };
-      document.body.appendChild(script);
-    });
-  };
-  const handleBuyChirps = async (chirps, amount) => {
-    const razorpayLoaded = await loadRazorpayScript();
-
-    if (!razorpayLoaded) {
-      toast.error("Failed to load Razorpay SDK. Please try again.", {
-        position: "top-center",
-      });
-      return;
-    }
-    try {
-      // Create Razorpay order
-      const response = await fetch("/api/razorpay", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ amount }),
-      });
-
-      const data = await response.json();
-
-      if (!data.orderId) {
-        toast.error("Failed to create Razorpay order. Please try again.", {
-          position: "top-center",
-        });
-        return;
-      }
-
-      const options = {
-        key: process.env.RAZORPAY_KEY_ID, // Replace with your Razorpay Key ID
-        amount: amount * 100, // Amount in paisa
-        currency: "INR",
-        name: "Chirps Purchase",
-        description: `Purchase ${chirps} Chirps`,
-        order_id: data.orderId,
-        handler: async function (response) {
-          console.log("Payment Successful");
-
-          // Payment successful, now update the user's chirps
-          try {
-            const viewerDocRef = doc(db, "users", user.uid);
-
-            // Add the purchased chirps to the user's current credits
-            await updateDoc(viewerDocRef, {
-              credits: viewerCredits + chirps,
-            });
-
-            // Update local state with new credits
-            setViewerCredits(viewerCredits + chirps);
-
-            // Close the Buy Chirps modal
-            setIsBuyChirpsModalOpen(false);
-
-            // Show a success toast
-            toast.success(`You successfully bought ${chirps} chirps!`, {
-              position: "top-center",
-            });
-          } catch (error) {
-            console.error("Error adding chirps:", error);
-            toast.error(
-              "Failed to update chirps after payment. Please contact support.",
-              {
-                position: "top-center",
-              }
-            );
-          }
-        },
-        prefill: {
-          name: user.displayName,
-          email: user.email,
-        },
-        theme: {
-          color: "#5d0690",
-        },
-      };
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
-    } catch (error) {
-      console.error("Payment Failed", error);
-    }
-  };
   if (!user) {
     return (
       <Image
@@ -1119,7 +1034,12 @@ const StreamPage = ({ params }) => {
                 type="text"
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                onSubmit={handleSendMessage}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                    e.preventDefault(); // Prevents the newline from being added to the input
+                  }
+                }}
                 placeholder="Type a message..."
                 className="flex-grow px-2 py-1 rounded bg-purple-800 text-white focus-within:border-transparent outline-none w-full"
               />

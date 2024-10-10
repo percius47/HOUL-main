@@ -45,6 +45,12 @@ const Login = ({ onLogin }) => {
     }
 
     // Redirect to the homepage after ensuring the document is created
+       const redirectUrl = localStorage.getItem("redirectUrl");
+       if (redirectUrl) {
+         router.push(redirectUrl); // Redirect to the initially intended stream page
+         localStorage.removeItem("redirectUrl"); // Clear the stored URL
+       }
+       else
     router.push("/");
   };
 
@@ -57,6 +63,7 @@ const Login = ({ onLogin }) => {
       setError(err.message);
     }
   };
+
 
   const handleEmailPasswordAuth = async (e) => {
     e.preventDefault();
