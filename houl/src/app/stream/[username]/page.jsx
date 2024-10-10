@@ -94,8 +94,8 @@ const StreamPage = ({ params }) => {
     return () => unsubscribeAuth();
   }, [router]);
 
-   // Highlighted: Retrieve redirect URL after login
- //If any user comes directly to this page without account creation, user is directed towards auth page and once thay login successfully, they are redirected to this page.
+  // Highlighted: Retrieve redirect URL after login
+  //If any user comes directly to this page without account creation, user is directed towards auth page and once thay login successfully, they are redirected to this page.
 
   //sets range to 0 on buy chirps modal
   useEffect(() => {
@@ -312,34 +312,37 @@ const StreamPage = ({ params }) => {
     }
   };
 
+  // Fetching author's UID and setting authorId
   useEffect(() => {
     if (!username || !user) return;
 
     const fetchUserData = async () => {
-      //fetching streamer data
+      // Fetching streamer data
       const authorUid = await fetchAuthorUid(username);
-      if(authorId!==null){
-      setAuthorId(authorUid);
-
-      const userDocRef = doc(db, "users", authorUid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-
-        setCreatorAvatar(userData.photoUrl);
-        setFollowers(userData.followers?.length || 0); // Set followers count
-        setIsFollowing(
-          Array.isArray(userData.followers)
-            ? userData.followers.includes(user.uid)
-            : false
-        );
-        setSubscribers(userData.subscribers?.length || 0);
-        setIsSubscribed(
-          Array.isArray(userData.subscribers)
-            ? userData.subscribers.includes(user.uid)
-            : false
-        );
-      }}  
+      if (authorUid) {
+        // Ensure authorUid is valid before setting it
+        setAuthorId(authorUid);
+        const userDocRef = doc(db, "users", authorUid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setCreatorAvatar(userData.photoUrl);
+          setFollowers(userData.followers?.length || 0);
+          setIsFollowing(
+            Array.isArray(userData.followers)
+              ? userData.followers.includes(user.uid)
+              : false
+          );
+          setSubscribers(userData.subscribers?.length || 0);
+          setIsSubscribed(
+            Array.isArray(userData.subscribers)
+              ? userData.subscribers.includes(user.uid)
+              : false
+          );
+        }
+      } else {
+        console.error("Error: Author UID could not be fetched.");
+      }
     };
 
     fetchUserData();
@@ -385,7 +388,13 @@ const StreamPage = ({ params }) => {
   };
 
   // Handle subscribe logic
+  // Check for authorId in handleSubscribe
   const handleSubscribe = async () => {
+    if (!authorId) {
+      console.error("Error: authorId is null. Cannot proceed with subscribe.");
+      return; // Prevent subscribing if authorId is not set
+    }
+
     if (viewerCredits < 25) {
       toast.error(`Insufficient credits to subscribe to ${username}`, {
         position: "top-center",
@@ -417,7 +426,6 @@ const StreamPage = ({ params }) => {
       console.error("Error subscribing:", error);
     }
   };
-
   const handleUnsubscribe = async () => {
     const userDocRef = doc(db, "users", authorId);
 
@@ -939,7 +947,7 @@ const StreamPage = ({ params }) => {
             />
           )}
         </div>
-
+{/* Chat Section */}
         <div className="w-full lg:w-[30%] pt-4 bg-gray-800 flex flex-col h-[85vh] overflow-hidden rounded-t-lg rounded-b-md relative streamPage_Chat">
           <h2 className="text-xl font-bold text-white ml-2">Live Chat</h2>
           <div
@@ -1050,7 +1058,7 @@ const StreamPage = ({ params }) => {
                 }}
               >
                 <span className="text-sm">
-                  {viewerCredits !== 0 && `x${viewerCredits}`}
+                  {viewerCredits >= 0 && `x${viewerCredits}`}
                 </span>
                 <Image
                   src="/chirpsIcon.png"
